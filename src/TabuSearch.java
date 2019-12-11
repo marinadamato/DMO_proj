@@ -6,7 +6,7 @@ import javafx.util.Pair;
 
 public class TabuSearch {
     private ArrayList<TLelement> tabulist = new ArrayList<>();
-    private HashMap<Integer, ArrayList<Exam>> solution = new HashMap<>();
+    private HashMap<Integer, Integer> solution = new HashMap<>();
     private HashMap<Pair<Exam, Exam>, Integer> conflicts = new HashMap<>();
     private int timelimit;
 
