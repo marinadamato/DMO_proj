@@ -14,7 +14,8 @@ public class TabuSearch {
         this.timelimit = timelimit;
     }
 
-    public void generate_conflicts(ArrayList<Student> studs) {
+    //QUESTO METODO PER ORA E' INUTILE, GUARDARE buildNeEMatrix() IN Model.java
+    /*public void generate_conflicts(ArrayList<Student> studs) {
         for(Student s : studs) {
             for(int i=0; i<s.getExams().size()-1; i++) {
                 for(int j=i+1; j<s.getExams().size(); j++) {
@@ -27,7 +28,8 @@ public class TabuSearch {
             }
         }
         System.out.println(conflicts.entrySet());
-    }
+        
+    }*/
 
     public void run() {
 
