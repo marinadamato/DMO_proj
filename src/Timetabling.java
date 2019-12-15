@@ -5,15 +5,14 @@ import java.util.Map;
 
 public class Timetabling {
 
-    public static void main(String[] args) throws Exception, IOException {
 
+    public static void main(String[] args) throws Exception, IOException {
         Model model = new Model();
         model.loadSlo("test.slo");
         model.loadExm("test.exm");
-		model.loadStu("test.stu");
-		model.buildNeEMatrix();
-        TabuSearch ts = new TabuSearch(1);
-
+        model.loadStu("test.stu");
+        model.buildNeEMatrix();
+        TabuSearch ts = new TabuSearch(1, model);
+        ts.run();
     }
 }
-
