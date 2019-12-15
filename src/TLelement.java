@@ -1,19 +1,19 @@
 public class TLelement {
-    private Exam e;
+    private Integer e;
     private int timeslot;
 
-    public TLelement(Exam e, int timeslot) {
+    public TLelement(Integer e, int timeslot) {
         this.e = e;
         this.timeslot = timeslot;
     }
 
-    public Exam getE() {
+    public Integer getE() {
         return e;
     }
     public int getTimeslot() {
         return timeslot;
     }
-    public void setE(Exam e) {
+    public void setE(Integer e) {
         this.e = e;
     }
     public void setTimeslot(int timeslot) {
