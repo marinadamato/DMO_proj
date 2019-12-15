@@ -19,5 +19,7 @@ public class TLelement {
     public void setTimeslot(int timeslot) {
         this.timeslot = timeslot;
     }
-
+    public String toString() {
+    	return this.e + " in timeslot " + this.timeslot + "\n";
+    }
 }

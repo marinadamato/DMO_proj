@@ -70,21 +70,21 @@ public class Model {
             File file_exams = new File(file);
             BufferedReader br_exm = new BufferedReader(new FileReader(file_exams));
             while ((st = br_exm.readLine()) != null) {
-
-                String[] parts = st.split(" ");
-                if(parts.length != 2) throw new IOException();
-                for(int i=0; i<parts.length; i++) {
-                    if(!isNumeric(parts[i])) throw new IOException();
-                    //else System.out.println(parts[i]);
-                }
-                int id = Integer.parseInt(parts[0]);
-                int nStudents = Integer.parseInt(parts[1]);
-                Exam e = new Exam(id, nStudents);
-                ArrayList<String> students = new ArrayList<String>();
-                e.setStudents(students);
-                exms.put(id, e);
-                //ex_st.put(id, students);
-
+            	if(st.length()>0){
+	                String[] parts = st.split(" ");
+	                if(parts.length != 2) throw new IOException();
+	                for(int i=0; i<parts.length; i++) {
+	                    if(!isNumeric(parts[i])) throw new IOException();
+	                    //else System.out.println(parts[i]);
+	                }
+	                int id = Integer.parseInt(parts[0]);
+	                int nStudents = Integer.parseInt(parts[1]);
+	                Exam e = new Exam(id, nStudents);
+	                ArrayList<String> students = new ArrayList<String>();
+	                e.setStudents(students);
+	                exms.put(id, e);
+	                //ex_st.put(id, students);
+            	}
             }
             br_exm.close();
             return true;
@@ -102,20 +102,22 @@ public class Model {
             BufferedReader br_stu = new BufferedReader(new FileReader(file_stud));
             while ((st = br_stu.readLine()) != null) {
                 //System.out.println(st);
-                String[] parts = st.split(" ");
-                if(parts.length != 2) throw new IOException();
-                if(!isNumeric(parts[1]) || isNumeric(parts[0])) throw new IOException();
-                //else {
-                //System.out.println(parts[0]);
-                //System.out.println(parts[1]);
-                //}
-                String idS = parts[0];
-                int idE = Integer.parseInt(parts[1]);
-                if(!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
-                    studs.add(idS);
-                    exms.get(idE).addStudent(idS);
-                }
-                else throw new IOException();
+            	if(st.length()>0){
+	                String[] parts = st.split(" ");
+	                if(parts.length != 2) throw new IOException();
+	                if(!isNumeric(parts[1]) || isNumeric(parts[0])) throw new IOException();
+	                //else {
+	                //System.out.println(parts[0]);
+	                //System.out.println(parts[1]);
+	                //}
+	                String idS = parts[0];
+	                int idE = Integer.parseInt(parts[1]);
+	                if(!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
+	                    studs.add(idS);
+	                    exms.get(idE).addStudent(idS);
+	                }
+	                else throw new IOException();
+            	}
             }
             br_stu.close();
             return true;
@@ -199,7 +201,7 @@ public class Model {
             }
         }
 
-        System.out.println(solution.toString());
+        System.out.println("Initial solution: " + solution.toString());
         return solution;
     }
 

@@ -82,10 +82,10 @@ public class TabuSearch {
             }
         }
 
-        System.out.println(tl.getE());
-        System.out.println(tl.getTimeslot());
+        System.out.println("Elemento da inserire nella tl:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
         if(tl.getE()!=0 && tl.getTimeslot()!=0)
             this.addTL(tl);
+        System.out.println();
         return bestSol;
     }
 
@@ -93,7 +93,7 @@ public class TabuSearch {
         double penalty;
         solution = model.initialSol();
         penalty = model.computePenalty(solution);
-        System.out.println(penalty);
+        System.out.println("Penality:" + penalty);
         HashMap<Integer, Integer> bestSol;
         long diff;
         long endTime;
@@ -106,8 +106,7 @@ public class TabuSearch {
             if(!solution.equals(bestSol)){
                 solution = bestSol;
                 penalty = model.computePenalty(bestSol);
-                System.out.println(penalty);
-                System.out.println(solution);
+                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
             }
             else{
                 System.out.println("Minimo locale");
