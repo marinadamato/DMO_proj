@@ -164,16 +164,27 @@ public class Model {
         else
             return false;
     }
+    
+    private boolean isEmpty(Integer[] sol){
+    	boolean flag = true;
+    	for(int i = 0; i < sol.length; i++) {
+    		if(sol[i]!=null) {
+    			flag = false;
+    			break;
+    		}
+    	}
+    	return flag;
+    }
 
-    public int checkVal(HashMap<Integer, Integer> solution, int nSlots, int e){
+    public int checkVal(Integer[] solution, int nSlots, int e){
         boolean isConflict;
 
-        if(!solution.isEmpty()){
-            for(Map.Entry<Integer,Integer> entry : solution.entrySet())
+        if(!isEmpty(solution)){
+            for(int i = 0; i < solution.length; i++)
             {
-                if(entry.getValue().equals(nSlots))
+                if(solution[i] == nSlots)
                 {
-                    isConflict = areConflictual(e, entry.getKey());
+                    isConflict = areConflictual(e+1, i+1);
                     if (isConflict){
                         return 1;
                     }
@@ -185,8 +196,11 @@ public class Model {
         return 0;
     }
 
-    public HashMap<Integer, Integer> initialSol(){
-        HashMap<Integer, Integer> solution = new HashMap<>();
+    public Integer[] initialSol(){
+        Integer[] solution = new Integer[exms.size()];
+        for(int i=0; i<solution.length; i++) {
+        	solution[i] = -1;
+        }
         int nExam = exms.size();
         int nSlots;
         int flag=0;
@@ -195,8 +209,9 @@ public class Model {
             flag = 1;
             nSlots = getRandomNumberUsingNextInt(1, n_timeslots+1);
             while(flag!=0){
-                flag = checkVal(solution, nSlots, e);
-                solution.put(e, nSlots);
+                flag = checkVal(solution, nSlots, e-1);
+                if(flag == 0) {
+                	solution[e-1]= nSlots;}
                 nSlots = getRandomNumberUsingNextInt(1, n_timeslots+1);
             }
         }

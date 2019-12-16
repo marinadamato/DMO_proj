@@ -21,6 +21,24 @@ public class TabuSearch {
         tabulist.add(tl);
     }
 
+    private Integer[] fromMaptoVect(HashMap<Integer, Integer> sol) {
+    	Integer[] newsol = new Integer[sol.keySet().size()];
+    	for(Map.Entry<Integer,Integer> entry : sol.entrySet()) {
+    		newsol[entry.getKey()-1] = entry.getValue();
+    	}
+    	return newsol;
+    }
+    
+    private HashMap<Integer, Integer> fromVecttoMap(Integer[] sol) {
+    	 HashMap<Integer, Integer> newsol = new HashMap<>();
+    	 for(int i=0; i < sol.length; i++) {
+    		 newsol.put(i+1, sol[i]);
+    		 
+    	 }
+    	
+    	
+    	return newsol;
+    }
     //QUESTO METODO PER ORA E' INUTILE, GUARDARE buildNeEMatrix() IN Model.java
     /*public void generate_conflicts(ArrayList<Student> studs) {
         for(Student s : studs) {
@@ -64,7 +82,7 @@ public class TabuSearch {
             HashMap<Integer, Integer> newSol = (HashMap<Integer, Integer>) solution.clone();
             for(int i=1; i<n_timeslots+1; i++){
                 if(i!=entry.getValue()){
-                    conflict = model.checkVal(newSol, i, entry.getKey());
+                    conflict = model.checkVal(fromMaptoVect(newSol), i, entry.getKey()-1);
                     if(conflict == 0) {
                         newSol.replace(entry.getKey(), i);
                         newP = model.computePenalty(newSol);
@@ -91,7 +109,7 @@ public class TabuSearch {
 
     public void run() {
         double penalty;
-        solution = model.initialSol();
+        solution = fromVecttoMap(model.initialSol());
         penalty = model.computePenalty(solution);
         System.out.println("Penality:" + penalty);
         HashMap<Integer, Integer> bestSol;
