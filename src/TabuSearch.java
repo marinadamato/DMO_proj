@@ -2,13 +2,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javafx.util.Pair;
+//import javafx.util.Pair;
 
 
 public class TabuSearch {
     private ArrayList<TLelement> tabulist = new ArrayList<>();
     private HashMap<Integer, Integer> solution = new HashMap<>();
-    private HashMap<Pair<Exam, Exam>, Integer> conflicts = new HashMap<>();
+    //private HashMap<Pair<Exam, Exam>, Integer> conflicts = new HashMap<>();
     private int timelimit;
     private Model model;
 

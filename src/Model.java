@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 public class Model {
 
     private int n_timeslots;
-    private int[][] population;
     private Integer[][] nEe;
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
@@ -144,7 +143,7 @@ public class Model {
                 }
             }
         }
-
+        
         for (Integer[] row : nEe)
             // converting each row as string
             // and then printing in a separate line
@@ -228,6 +227,5 @@ public class Model {
 
         return penalty;
     }
-
 
 }

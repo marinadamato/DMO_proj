@@ -12,7 +12,6 @@ public class Timetabling {
         model.loadExm("test.exm");
         model.loadStu("test.stu");
         model.buildNeEMatrix();
-        TabuSearch ts = new TabuSearch(1, model);
-        ts.run();
+        
     }
 }
