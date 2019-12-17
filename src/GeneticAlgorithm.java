@@ -1,5 +1,6 @@
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 public class GeneticAlgorithm {
 	
@@ -21,7 +22,7 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
-		this.compute_initial_population();
+		this.initial_population();
 		this.print_population();
 	}
 	
@@ -36,7 +37,7 @@ public class GeneticAlgorithm {
 		return false;
 	}
 	
-	private void compute_initial_population() {		
+	private void initial_population() {		
 		Random rand = new Random();
 		int time_slot, n_time_slots = model.getN_timeslots();
 		
@@ -45,15 +46,37 @@ public class GeneticAlgorithm {
 			for(int e=0; e < n_exams; e++) {
 				while( are_conflictual(time_slot, e, population[c])) {
 					time_slot++;
+					// 
+					if(time_slot >= n_time_slots) {
+						time_slot = time_slot % n_time_slots;
+					}
 				}
 				population[c][e] = time_slot;
 				time_slot++;
+				if(time_slot >= n_time_slots) {
+					time_slot = time_slot % n_time_slots;
+				}
 			}
 		}
 	}
 	
-	private void compute_fitness() {
-		
+	// This method computes fitness for each chromosomes
+	private void fitness() {
+		double penalty = 0;		
+		int distance = 0, count = 0;
+		 
+		for(int c=0; c < n_chrom; c++) { // For each chroms
+			for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
+				for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
+					distance = Math.abs(population[c][e1] - population[c][e2]);
+					if(distance <= 5) {
+						// count += (2^(5-distance) * this.nEe[e1][e2])/
+					}
+				}
+				
+			}
+			
+		}
 	}
 	
 	private void crossover() {
