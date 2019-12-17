@@ -16,6 +16,6 @@ public class Timetabling {
         int n_exams = model.getExms().size();
         
         GeneticAlgorithm ga = new GeneticAlgorithm(model, 4, n_exams);
-        ga.computeStartPopulation();
+        ga.fit_predict();
     }
 }
