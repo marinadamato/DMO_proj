@@ -24,7 +24,7 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
-		this.initial_population();
+		this.initial_population_RANDOM();
 		this.print_population();
 		this.fitness();
 		this.print_fitness();
@@ -41,6 +41,7 @@ public class GeneticAlgorithm {
 		return false;
 	}
 	
+	// it doesn't work with instance01, it runs too much
 	private void initial_population() {		
 		Random rand = new Random();
 		int time_slot, n_time_slots = model.getN_timeslots();
@@ -60,6 +61,18 @@ public class GeneticAlgorithm {
 				if(time_slot >= n_time_slots) {
 					time_slot = time_slot % n_time_slots;
 				}
+			}
+		}
+	}
+	
+	// it is lightspeed, but it makes infeasible solutions
+	private void initial_population_RANDOM() {
+		Random rand = new Random();
+		int n_time_slots = model.getN_timeslots();
+		
+		for(int c=0; c<n_chrom; c++) {
+			for(int e=0; e < n_exams; e++) {
+				population[c][e] = rand.nextInt(n_time_slots);
 			}
 		}
 	}
@@ -98,9 +111,30 @@ public class GeneticAlgorithm {
 	}
 	
 	private void print_fitness() {
+		System.out.println("Fitness: ");
 		for (int i=0; i < n_chrom; i++) {
 			System.out.println("ch" + (i+1) + ": " + fitness[i]);
 		}
+	}
+
+	public int[][] getPopulation() {
+		return population;
+	}
+
+	public int getN_chrom() {
+		return n_chrom;
+	}
+
+	public int getN_exams() {
+		return n_exams;
+	}
+
+	public int getN_students() {
+		return n_students;
+	}
+
+	public double[] getFitness() {
+		return fitness;
 	}
 	
 	
