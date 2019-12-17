@@ -26,15 +26,15 @@ public class Model {
     }
 
     public Integer[][] getnEe(){
-        return this.getnEe();
+        return this.nEe;
     }
 
     public HashMap<Integer, Exam> getExms(){
-        return this.getExms();
+        return this.exms;
     }
 
     public HashSet<String> getStuds(){
-        return this.getStuds();
+        return this.studs;
     }
 
     public static boolean isNumeric(String str) {

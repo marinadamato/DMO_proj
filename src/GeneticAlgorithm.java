@@ -1,3 +1,4 @@
+import java.util.Random;
 
 public class GeneticAlgorithm {
 	
@@ -29,14 +30,16 @@ public class GeneticAlgorithm {
 	}
 	
 	public void computeStartPopulation() {		
-		int time_slot = 0;
+		Random rand = new Random();
+		int time_slot, n_time_slots = model.getN_timeslots();
 		
 		for(int c=0; c<n_chrom; c++) {
-			time_slot = 0;
+			time_slot = rand.nextInt(n_time_slots);
 			for(int e=0; e < n_exams; e++) {
-				if( !areConflictual(time_slot, e, population[c])) {
-					population[c][e] = time_slot;
-				}				
+				while( areConflictual(time_slot, e, population[c])) {
+					time_slot++;
+				}
+				population[c][e] = time_slot;
 				time_slot++;
 			}
 		}
