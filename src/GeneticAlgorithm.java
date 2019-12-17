@@ -26,16 +26,19 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
-		this.initial_population_RANDOM();
+		this.initial_population();
 		this.print_population();
 		this.fitness();
 		this.print_fitness();
 		
-		this.crossover();
+		for(int i = 0; i<10; i++) {
+			System.out.print("\n\n"+ i +"th Iteration \n");
+			this.crossover();
+			this.print_population();
+			this.fitness();
+			this.print_fitness();
+		}
 
-		this.print_population();
-		this.fitness();
-		this.print_fitness();
 	}
 	
 	private boolean are_conflictual(int time_slot, int exam_id, int[] chrom) {		
@@ -69,6 +72,7 @@ public class GeneticAlgorithm {
 					time_slot = time_slot % n_time_slots;
 				}
 			}
+			//System.out.print(isFeasible(population[c]))	;
 		}
 	}
 	
@@ -86,20 +90,24 @@ public class GeneticAlgorithm {
 	
 	// This method computes fitness for each chromosomes
 	private void fitness() {
-		float penalty = 0;		
-		int distance = 0;
+		double penalty;		
+		int distance;
 		 
 		for(int c=0; c < n_chrom; c++) { // For each chroms
+			penalty = 0;
+			distance = 0;
+			
 			for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
 				for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
 					distance = Math.abs(population[c][e1] - population[c][e2]);
 					if(distance <= 5) {
 						penalty += (2^(5-distance) * this.nEe[e1][e2]);
 					}
-				}
-				penalty = (float) penalty / this.n_students;
-				this.fitness[c] =  1 / penalty;				
+				}			
 			}
+
+			penalty = penalty / this.n_students;
+			this.fitness[c] =  1 / penalty;	
 			
 		}
 		
@@ -120,17 +128,17 @@ public class GeneticAlgorithm {
 		  parents[0] = population[indParent1];
 		  
 		  for(int i=0;i<fitness.length;i++){
-			  if(fitness[i] < minValueP2 && fitness[i] != minValueP1){
+			  if(fitness[i] < minValueP2 && indParent1!=i && parents[0] != population[i] ){
 				  minValueP2 = fitness[i];
 				  indParent2 = i;
 				}
 		  }
 		  parents[1] = population[indParent2];
 		  
-		  int crossingSecStart = rand.nextInt(n_exams);
-		  int crossingSecEnd = rand.nextInt(n_exams-crossingSecStart) + crossingSecStart;
+		  int crossingSecStart = rand.nextInt(n_exams-1);
+		  int crossingSecEnd = rand.nextInt(n_exams-crossingSecStart-1) + crossingSecStart;
 		  int[][] childs = new int[2][n_exams];
-		  // System.out.print(crossingSecStart + " - " + crossingSecEnd );
+		  System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
 		  
 		  // Swap crossing section two chromosome 
 		  for(int i = crossingSecStart; i <= crossingSecEnd; i++) {
@@ -146,7 +154,25 @@ public class GeneticAlgorithm {
 			  int indValue = position;
 			  int count = 0;
 		  
-			  while(position != crossingSecStart ) {
+			  do {
+				  
+				  if(!are_conflictual(parents[i][indValue], position, childs[i])) {
+					  childs[i][position] = parents[i][indValue];
+					  
+					  position++;
+					  count = 0;
+				  } else if (count>=this.n_exams) {
+					  int randTime = rand.nextInt(n_time_slots);
+					  if(!are_conflictual(randTime, position, childs[i])) {
+						  childs[i][position] = randTime;
+					  
+						  position++;
+						  count = 0;
+					  }
+				  }
+				  
+				  indValue++;
+				  count++;
 				  
 				  if(position == n_exams) 
 					  position = 0;
@@ -154,16 +180,7 @@ public class GeneticAlgorithm {
 				  if(indValue == n_exams) 
 					  indValue = 0;
 				  
-				  if(!are_conflictual(parents[i][indValue], position, childs[i]) || count>this.n_exams) {
-					  childs[i][position] = parents[i][indValue];
-					  
-					  position++;
-					  count = 0;
-				  }
-				  
-				  indValue++;
-				  count++;
-			  } 
+			  } while(position != crossingSecStart );
 		  }
 		  
 		  if(isFeasible(childs[0])) 
