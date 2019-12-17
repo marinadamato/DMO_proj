@@ -26,7 +26,7 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
-		this.initial_population();
+		this.initial_population_RANDOM();
 		this.print_population();
 		this.fitness();
 		this.print_fitness();
@@ -48,7 +48,8 @@ public class GeneticAlgorithm {
 		}
 		return false;
 	}
-	
+
+	// it doesn't work with instance01, it runs too much
 	private void initial_population() {	
 		int time_slot = n_time_slots;
 		
@@ -70,6 +71,18 @@ public class GeneticAlgorithm {
 			}
 		}
 	}
+	
+	// it is lightspeed, but it makes infeasible solutions
+		private void initial_population_RANDOM() {
+			Random rand = new Random();
+			int n_time_slots = model.getN_timeslots();
+			
+			for(int c=0; c<n_chrom; c++) {
+				for(int e=0; e < n_exams; e++) {
+					population[c][e] = rand.nextInt(n_time_slots);
+				}
+			}
+		}
 	
 	// This method computes fitness for each chromosomes
 	private void fitness() {
@@ -104,7 +117,6 @@ public class GeneticAlgorithm {
 				  indParent1 = i;
 				}
 		  }
-		  
 		  parents[0] = population[indParent1];
 		  
 		  for(int i=0;i<fitness.length;i++){
@@ -113,7 +125,6 @@ public class GeneticAlgorithm {
 				  indParent2 = i;
 				}
 		  }
-		  
 		  parents[1] = population[indParent2];
 		  
 		  int crossingSecStart = rand.nextInt(n_exams);
@@ -136,6 +147,7 @@ public class GeneticAlgorithm {
 			  int count = 0;
 		  
 			  while(position != crossingSecStart ) {
+				  
 				  if(position == n_exams) 
 					  position = 0;
 				  
