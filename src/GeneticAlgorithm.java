@@ -8,22 +8,26 @@ public class GeneticAlgorithm {
 	private Model model;
 	private int n_chrom;
 	private int n_exams;
+	private int n_students;
 	private Integer[][] nEe;
-	private int[] fitness;
+	private double[] fitness;
 	 
-	public GeneticAlgorithm(Model model, int n_chrom, int n_exams) {
+	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
 		this.model = model;
 		this.n_chrom = n_chrom;
-		this.n_exams = n_exams;
-		this.nEe = model.getnEe();		
+		this.n_exams = model.getExms().size();;
+		this.n_students = model.getStuds().size();
+		this.nEe = model.getnEe();	
 		this.population = new int[n_chrom][n_exams];	
-		this.fitness = new int[n_chrom];
+		this.fitness = new double[n_chrom];
 	}
 	
 	public void fit_predict() {
 		this.initial_population();
 		this.print_population();
+		this.fitness();
+		this.print_fitness();
 	}
 	
 	private boolean are_conflictual(int time_slot, int exam_id, int[] chrom) {		
@@ -46,7 +50,7 @@ public class GeneticAlgorithm {
 			for(int e=0; e < n_exams; e++) {
 				while( are_conflictual(time_slot, e, population[c])) {
 					time_slot++;
-					// 
+					// This line makes time_slot to be between 0 and n_time_slots
 					if(time_slot >= n_time_slots) {
 						time_slot = time_slot % n_time_slots;
 					}
@@ -63,17 +67,18 @@ public class GeneticAlgorithm {
 	// This method computes fitness for each chromosomes
 	private void fitness() {
 		double penalty = 0;		
-		int distance = 0, count = 0;
+		int distance = 0;
 		 
 		for(int c=0; c < n_chrom; c++) { // For each chroms
 			for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
 				for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
 					distance = Math.abs(population[c][e1] - population[c][e2]);
 					if(distance <= 5) {
-						// count += (2^(5-distance) * this.nEe[e1][e2])/
+						penalty += (2^(5-distance) * this.nEe[e1][e2]);
 					}
 				}
-				
+				penalty = (double) penalty / this.n_students;
+				this.fitness[c] = 1 / penalty;				
 			}
 			
 		}
@@ -92,6 +97,11 @@ public class GeneticAlgorithm {
 		}
 	}
 	
+	private void print_fitness() {
+		for (int i=0; i < n_chrom; i++) {
+			System.out.println("ch" + (i+1) + ": " + fitness[i]);
+		}
+	}
 	
 	
 	 
