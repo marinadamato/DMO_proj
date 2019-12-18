@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class GeneticAlgorithm {
 	
-	private int[][] population;
+	private Integer[][] population;
 	private Model model;
 	private int n_chrom;
 	private int n_exams;
@@ -12,6 +12,7 @@ public class GeneticAlgorithm {
 	private Integer[][] nEe;
 	private double[] fitness;	
 	private Random rand = new Random();
+	private boolean find;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -20,18 +21,18 @@ public class GeneticAlgorithm {
 		this.n_exams = model.getExms().size();;
 		this.n_students = model.getStuds().size();
 		this.nEe = model.getnEe();	
-		this.population = new int[n_chrom][n_exams];	
+		this.population = new Integer[n_chrom][n_exams];	
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
 	}
 	
 	public void fit_predict() {
-		this.initial_population();
+		this.initial_population_RANDOM();
 		this.print_population();
 		this.fitness();
 		this.print_fitness();
 		
-		for(int i = 0; i<10; i++) {
+		for(int i = 0; i<2; i++) {
 			System.out.print("\n\n"+ i +"th Iteration \n");
 			this.crossover();
 			this.print_population();
@@ -41,9 +42,9 @@ public class GeneticAlgorithm {
 
 	}
 	
-	private boolean are_conflictual(int time_slot, int exam_id, int[] chrom) {		
+	private boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {		
 		for(int e = 0; e < this.n_exams; e++) {
-			if(e != exam_id) {
+			if(e != exam_id && chrom[e]!=null) {
 				if(chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {
 					return true;
 				}
@@ -78,15 +79,45 @@ public class GeneticAlgorithm {
 	
 	// it is lightspeed, but it makes infeasible solutions
 		private void initial_population_RANDOM() {
-			Random rand = new Random();
+			/*Random rand = new Random();
 			int n_time_slots = model.getN_timeslots();
 			
 			for(int c=0; c<n_chrom; c++) {
 				for(int e=0; e < n_exams; e++) {
 					population[c][e] = rand.nextInt(n_time_slots);
 				}
+			}*/
+			
+			for(int c=0; c<n_chrom; c++) {
+				find = false;
+				int exam_id = rand.nextInt(this.n_exams-1);
+				recursive(population[c],exam_id, c, 0);
 			}
+			
 		}
+		
+	private void recursive(Integer[] chrom, int exam_id, int indChrom, int eAssigned) {
+		
+		if(exam_id == this.n_exams)
+			exam_id = 0;
+		
+		if(eAssigned < this.n_exams) {
+			for(int i =0; i< this.n_time_slots; i++) {
+				if(!are_conflictual(i, exam_id, chrom)) {
+					if(!find) {
+						chrom[exam_id] = i;
+						recursive(chrom, exam_id+1, indChrom, eAssigned+1);
+						chrom[exam_id] = null;
+						
+						//i =rand.nextInt(n_time_slots-1);
+					} else break;
+				}
+			}
+		} else if(isFeasible(chrom)) {
+			find = true;
+			population[indChrom] = chrom.clone();
+		}
+	}
 	
 	// This method computes fitness for each chromosomes
 	private void fitness() {
@@ -116,7 +147,7 @@ public class GeneticAlgorithm {
 	private void crossover() {
 		int indParent1 = 0, indParent2 = 0;
 		double minValueP1 = fitness[0], minValueP2 = fitness[0];
-		int[][] parents = new int[2][n_exams];
+		Integer[][] parents = new Integer[2][n_exams];
 		
 		
 		  for(int i=0;i<fitness.length;i++){
@@ -137,7 +168,7 @@ public class GeneticAlgorithm {
 		  
 		  int crossingSecStart = rand.nextInt(n_exams-1);
 		  int crossingSecEnd = rand.nextInt(n_exams-crossingSecStart-1) + crossingSecStart;
-		  int[][] childs = new int[2][n_exams];
+		  Integer[][] childs = new Integer[2][n_exams];
 		  System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
 		  
 		  // Swap crossing section two chromosome 
@@ -191,7 +222,7 @@ public class GeneticAlgorithm {
 		
 	}
 	
-	private boolean isFeasible(int[] chrom) {
+	private boolean isFeasible(Integer[] chrom) {
 		 for(int e = 0; e<this.n_exams; e++) {
 			  if(are_conflictual(chrom[e], e, chrom))
 				  return false;
@@ -203,7 +234,7 @@ public class GeneticAlgorithm {
 	private void print_population() {
 		int count = 1;
 		System.out.println("Population: ");
-		for(int[] chrom : population) {
+		for(Integer[] chrom : population) {
 			System.out.println("Chrom " + count + ": " + Arrays.toString(chrom));
 			count++;
 		}
