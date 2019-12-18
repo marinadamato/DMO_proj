@@ -148,7 +148,10 @@ public class GeneticAlgorithm {
 			}
 			n_conflict_for_exam.put(i, count);
 		}
-		//sorted = n_conflict_for_exam.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, HashMap::new));		
+		/*sorted = n_conflict_for_exam.entrySet().stream()
+		 * .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+		 * .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, HashMap::new));		
+		 */
 	}
 	
 	// This method computes fitness for each chromosomes
