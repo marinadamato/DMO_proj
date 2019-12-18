@@ -22,6 +22,7 @@ public class GeneticAlgorithm {
 	private double[] fitness;		
 	private Random rand;
 	private boolean find;
+	private Integer[] chromosome;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -48,7 +49,7 @@ public class GeneticAlgorithm {
 		this.fitness();
 		this.print_fitness();
 		
-		for(int i = 0; i<2; i++) {
+		for(int i = 1; i<10; i++) {
 			System.out.print("\n\n"+ i +"th Iteration \n");
 			this.crossover();
 			this.print_population();
@@ -108,22 +109,25 @@ public class GeneticAlgorithm {
 			for(int c=0; c<n_chrom; c++) {
 				find = false;
 				int exam_id = rand.nextInt(this.n_exams-1);
-				recursive(population[c],exam_id, c, 0);
+				chromosome = new Integer[this.n_time_slots];
+				
+				recursive(population[c],exam_id, c, this.n_exams);
+				population[c] = chromosome.clone();
 			}
 			
 		}
 		
-	private void recursive(Integer[] chrom, int exam_id, int indChrom, int eAssigned) {
+	private void recursive(Integer[] chrom, int exam_id, int indChrom, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
 			exam_id = 0;
 		
-		if(eAssigned < this.n_exams) {
+		if(numExamsNotAssignedYet > 0) {
 			for(int i =0; i< this.n_time_slots; i++) {
 				if(!are_conflictual(i, exam_id, chrom)) {
 					if(!find) {
 						chrom[exam_id] = i;
-						recursive(chrom, exam_id+1, indChrom, eAssigned+1);
+						recursive(chrom, exam_id+1, indChrom, numExamsNotAssignedYet-1);
 						chrom[exam_id] = null;
 						
 						//i =rand.nextInt(n_time_slots-1);
@@ -132,7 +136,7 @@ public class GeneticAlgorithm {
 			}
 		} else if(isFeasible(chrom)) {
 			find = true;
-			population[indChrom] = chrom.clone();
+			chromosome = chrom.clone();
 		}
 	}
 	
@@ -216,28 +220,32 @@ public class GeneticAlgorithm {
 		  for(int i=0; i<2; i++) {
 			  
 			  int position = crossingSecEnd+1;
-			  int indValue = position;
-			  int count = 0;
+			  //int indValue = position;
+			  int numExamsNotAssignedYet = (this.n_exams-(position-crossingSecStart));
+			  find = false;
+			  chromosome = new Integer[this.n_time_slots];
+			  
+			  recursive(childs[i],position, i, numExamsNotAssignedYet);
+			  childs[i] = chromosome.clone();
+
 		  
-			  do {
+			 /* do {
 				  
-				  if(!are_conflictual(parents[i][indValue], position, childs[i])) {
+				  int randTime = rand.nextInt(n_time_slots);
+				 /* if(!are_conflictual(parents[i][indValue], position, childs[i])) {
 					  childs[i][position] = parents[i][indValue];
 					  
 					  position++;
 					  count = 0;
 				  } else if (count>=this.n_exams) {
-					  int randTime = rand.nextInt(n_time_slots);
 					  if(!are_conflictual(randTime, position, childs[i])) {
 						  childs[i][position] = randTime;
 					  
 						  position++;
-						  count = 0;
 					  }
-				  }
+				  // }
 				  
 				  indValue++;
-				  count++;
 				  
 				  if(position == n_exams) 
 					  position = 0;
@@ -245,7 +253,7 @@ public class GeneticAlgorithm {
 				  if(indValue == n_exams) 
 					  indValue = 0;
 				  
-			  } while(position != crossingSecStart );
+			  } while(position != crossingSecStart ); */
 		  }
 		  
 		  if(isFeasible(childs[0])) 
