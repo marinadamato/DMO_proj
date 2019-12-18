@@ -1,6 +1,13 @@
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.*;
+import java.util.Collections;
+import java.util.Map.Entry.*;
+import java.util.stream.Collectors.*;
+import java.util.Comparator;
 
 public class GeneticAlgorithm {
 	
@@ -10,6 +17,8 @@ public class GeneticAlgorithm {
 	private int n_exams;
 	private Integer[][] nEe;
 	private int[] fitness;
+	private Map<Integer, Integer> n_conflict_for_exam = new HashMap<>();
+	private Map<Integer, Integer> sorted;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom, int n_exams) {
 		super();
@@ -24,6 +33,7 @@ public class GeneticAlgorithm {
 	public void fit_predict() {
 		this.initial_population();
 		this.print_population();
+		this.initial_population_alternative();
 	}
 	
 	private boolean are_conflictual(int time_slot, int exam_id, int[] chrom) {		
@@ -60,6 +70,21 @@ public class GeneticAlgorithm {
 		}
 	}
 	
+	public void initial_population_alternative() {
+		for(int i = 0; i < this.n_exams; i++) {
+			int count = 0;
+			for(int j = 0; j < this.n_exams; j++) {
+				if(i != j) {
+					if(this.nEe[i][j] != 0) {
+						count++;
+					}
+				}
+			}
+			n_conflict_for_exam.put(i, count);
+		}
+		sorted = n_conflict_for_exam.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, HashMap::new));		
+	}
+	
 	// This method computes fitness for each chromosomes
 	private void fitness() {
 		double penalty = 0;		
@@ -74,8 +99,7 @@ public class GeneticAlgorithm {
 					}
 				}
 				
-			}
-			
+			}	
 		}
 	}
 	
