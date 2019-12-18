@@ -15,7 +15,7 @@ public class GeneticAlgorithm {
 		super();
 		this.model = model;
 		this.n_chrom = n_chrom;
-		this.n_exams = model.getExms().size();;
+		this.n_exams = model.getExms().size();
 		this.n_students = model.getStuds().size();
 		this.nEe = model.getnEe();	
 		this.population = new int[n_chrom][n_exams];	
