@@ -45,7 +45,6 @@ public class GeneticAlgorithm {
 	public void fit_predict() {
 		this.initial_population_RANDOM();
 		this.print_population();
-		this.initial_population_alternative();
 		this.fitness();
 		this.print_fitness();
 		
