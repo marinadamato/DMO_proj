@@ -1,6 +1,5 @@
 import java.util.Arrays;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.*;
@@ -20,20 +19,27 @@ public class GeneticAlgorithm {
 	private Integer[][] nEe;
 	private Map<Integer, Integer> n_conflict_for_exam = new HashMap<>();
 	private Map<Integer, Integer> sorted;
-	private double[] fitness;	
-	private Random rand = new Random();
+	private double[] fitness;		
+	private Random rand;
 	private boolean find;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
 		this.model = model;
 		this.n_chrom = n_chrom;
-		this.n_exams = model.getExms().size();;
+		this.n_exams = model.getExms().size();
 		this.n_students = model.getStuds().size();
 		this.nEe = model.getnEe();	
 		this.population = new Integer[n_chrom][n_exams];	
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
+		this.n_exams = model.getExms().size();
+		this.n_students = model.getStuds().size();
+		this.nEe = model.getnEe();	
+		this.population = new Integer[n_chrom][n_exams];	
+		this.fitness = new double[n_chrom];
+		this.n_time_slots = model.getN_timeslots();
+		this.rand  = new Random();
 	}
 	
 	public void fit_predict() {
@@ -87,6 +93,7 @@ public class GeneticAlgorithm {
 			//System.out.print(isFeasible(population[c]))	;
 		}
 	}
+	
 	
 	// it is lightspeed, but it makes infeasible solutions
 		private void initial_population_RANDOM() {
@@ -163,13 +170,11 @@ public class GeneticAlgorithm {
 				}
 				
 			}	
-						
 			penalty = penalty / this.n_students;
 			this.fitness[c] =  1 / penalty;	
-			
-		}
-		
+		}			
 	}
+		
 	
 	private void crossover() {
 		int indParent1 = 0, indParent2 = 0;
@@ -268,9 +273,31 @@ public class GeneticAlgorithm {
 	}
 	
 	private void print_fitness() {
+
+		System.out.println("Fitness: ");
 		for (int i=0; i < n_chrom; i++) {
 			System.out.println("ch" + (i+1) + ": " + fitness[i]);
 		}
+	}
+
+	public Integer[][] getPopulation() {
+		return population;
+	}
+
+	public int getN_chrom() {
+		return n_chrom;
+	}
+
+	public int getN_exams() {
+		return n_exams;
+	}
+
+	public int getN_students() {
+		return n_students;
+	}
+
+	public double[] getFitness() {
+		return fitness;
 	}
 	
 	
