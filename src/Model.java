@@ -86,6 +86,7 @@ public class Model {
             	}
             }
             br_exm.close();
+            
             return true;
         } catch (IOException e) {
             System.err.println("Errore nella lettura del file");
@@ -144,10 +145,10 @@ public class Model {
             }
         }
         
-        for (Integer[] row : nEe)
+       /* for (Integer[] row : nEe)
             // converting each row as string
             // and then printing in a separate line
-            System.out.println(Arrays.toString(row));
+            System.out.println(Arrays.toString(row)); */
 
         return nEe;
     }

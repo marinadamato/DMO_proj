@@ -5,18 +5,14 @@ public class Timetabling {
 
     public static void main(String[] args) throws Exception, IOException {
         Model model = new Model();
-<<<<<<< Upstream, based on origin/GeneticAlgorithm
-        model.loadSlo("Instances/instance01.slo");
-        model.loadExm("Instances/instance01.exm");
-        model.loadStu("Instances/instance01.stu");
-=======
-        model.loadSlo("instance/instance01.slo");
-        model.loadExm("instance/instance01.exm");
-        model.loadStu("instance/instance01.stu");
->>>>>>> e400b6e Ciao
+        //Upstream, based on origin/GeneticAlgorithm
+        model.loadSlo("Instances/instance08.slo");
+        model.loadExm("Instances/instance08.exm");
+        model.loadStu("Instances/instance08.stu");
+
         model.buildNeEMatrix();
         
-        GeneticAlgorithm ga = new GeneticAlgorithm(model, 4);
+        GeneticAlgorithm ga = new GeneticAlgorithm(model, 3);
         ga.fit_predict();
     }
 }

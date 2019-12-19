@@ -2,10 +2,8 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.*;
-import java.util.Collections;
-import java.util.Map.Entry.*;
-import java.util.stream.Collectors.*;
 import java.util.Comparator;
 
 public class GeneticAlgorithm {
@@ -23,6 +21,8 @@ public class GeneticAlgorithm {
 	private Random rand;
 	private boolean find;
 	private Integer[] chromosome;
+	private int nLoop;
+	private int returnBack;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -70,7 +70,7 @@ public class GeneticAlgorithm {
 		return false;
 	}
 
-	// it doesn't work with instance01, it runs too much
+	/*// it doesn't work with instance01, it runs too much
 	private void initial_population() {	
 		int time_slot = n_time_slots;
 		
@@ -92,52 +92,88 @@ public class GeneticAlgorithm {
 			}
 			//System.out.print(isFeasible(population[c]))	;
 		}
-	}
+	} */
 	
 	
 	// it is lightspeed, but it makes infeasible solutions
 		private void initial_population_RANDOM() {
-			/*Random rand = new Random();
-			int n_time_slots = model.getN_timeslots();
-			
-			for(int c=0; c<n_chrom; c++) {
-				for(int e=0; e < n_exams; e++) {
-					population[c][e] = rand.nextInt(n_time_slots);
-				}
-			}*/
 			
 			for(int c=0; c<n_chrom; c++) {
 				find = false;
-				int exam_id = rand.nextInt(this.n_exams-1);
-				chromosome = new Integer[this.n_time_slots];
+				int exam_id = rand.nextInt(this.n_exams);
+				chromosome = new Integer[this.n_exams];
 				
-				recursive(population[c],exam_id, c, this.n_exams);
-				population[c] = chromosome.clone();
+				recursive(population[c],0,exam_id, this.n_exams);
+				if(isFeasible(chromosome))
+					population[c] = chromosome.clone();
+				else c--;
 			}
 			
 		}
 		
-	private void recursive(Integer[] chrom, int exam_id, int indChrom, int numExamsNotAssignedYet) {
+	private void recursive(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
 			exam_id = 0;
 		
 		if(numExamsNotAssignedYet > 0) {
-			for(int i =0; i< this.n_time_slots; i++) {
+			for(/*int i=0;i<this.n_exams;i++*/Integer i : getBestPath(chrom)) {
 				if(!are_conflictual(i, exam_id, chrom)) {
 					if(!find) {
 						chrom[exam_id] = i;
-						recursive(chrom, exam_id+1, indChrom, numExamsNotAssignedYet-1);
+						recursive(chrom, step+1, exam_id+1, numExamsNotAssignedYet-1);
 						chrom[exam_id] = null;
 						
-						//i =rand.nextInt(n_time_slots-1);
-					} else break;
+						if(returnBack>0 ) {
+							returnBack--;
+							return;
+						} else if(!find)
+							nLoop++; 
+		
+					} else return;
 				}
 			}
-		} else if(isFeasible(chrom)) {
+			
+			if(nLoop > n_time_slots)  {
+				returnBack = rand.nextInt(step);
+				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
+				nLoop = 0;
+			} 
+			
+		} else {
 			find = true;
 			chromosome = chrom.clone();
+			System.out.print("Trovato\n");
 		}
+	}
+	
+	public List<Integer> getBestPath(Integer[] chrom) {
+		List<Integer> path;
+		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
+		Integer t = 0;
+		
+		for(int k=0; k<this.n_time_slots;k++)
+			numStudentTimeSlot.put(k, 0);
+		
+		for(int i=1; i<this.n_exams; i++) {
+			
+			t = chrom[i-1];
+			if( t != null ) {
+				int numStud = (numStudentTimeSlot.get(t) + model.getExms().get(i).getStudents().size());
+				numStudentTimeSlot.replace(t, numStud);
+			}
+		}
+		
+		path =  numStudentTimeSlot.entrySet().stream()
+			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+			    .map(Map.Entry::getKey)
+			    .collect(Collectors.toList());
+		
+		/*System.out.print(numStudentTimeSlot.entrySet().stream()
+			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+			    .map(Map.Entry::getKey)
+			    .collect(Collectors.toList())+"\n"); */
+		return path;
 	}
 	
 	public void initial_population_alternative() {
@@ -225,35 +261,9 @@ public class GeneticAlgorithm {
 			  find = false;
 			  chromosome = new Integer[this.n_time_slots];
 			  
-			  recursive(childs[i],position, i, numExamsNotAssignedYet);
+			  recursive(childs[i],0,position, numExamsNotAssignedYet);
 			  childs[i] = chromosome.clone();
 
-		  
-			 /* do {
-				  
-				  int randTime = rand.nextInt(n_time_slots);
-				 /* if(!are_conflictual(parents[i][indValue], position, childs[i])) {
-					  childs[i][position] = parents[i][indValue];
-					  
-					  position++;
-					  count = 0;
-				  } else if (count>=this.n_exams) {
-					  if(!are_conflictual(randTime, position, childs[i])) {
-						  childs[i][position] = randTime;
-					  
-						  position++;
-					  }
-				  // }
-				  
-				  indValue++;
-				  
-				  if(position == n_exams) 
-					  position = 0;
-				  
-				  if(indValue == n_exams) 
-					  indValue = 0;
-				  
-			  } while(position != crossingSecStart ); */
 		  }
 		  
 		  if(isFeasible(childs[0])) 
@@ -266,7 +276,7 @@ public class GeneticAlgorithm {
 	
 	private boolean isFeasible(Integer[] chrom) {
 		 for(int e = 0; e<this.n_exams; e++) {
-			  if(are_conflictual(chrom[e], e, chrom))
+			  if(chrom[e] == null || are_conflictual(chrom[e], e, chrom))
 				  return false;
 		  }
 		 
@@ -286,7 +296,7 @@ public class GeneticAlgorithm {
 
 		System.out.println("Fitness: ");
 		for (int i=0; i < n_chrom; i++) {
-			System.out.println("ch" + (i+1) + ": " + fitness[i]);
+			System.out.println("Benchmark" + (i+1) + ": " + 1/fitness[i]);
 		}
 	}
 
