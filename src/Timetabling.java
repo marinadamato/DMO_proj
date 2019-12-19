@@ -12,7 +12,7 @@ public class Timetabling {
 
         model.buildNeEMatrix();
         
-        GeneticAlgorithm ga = new GeneticAlgorithm(model, 3);
+        GeneticAlgorithm ga = new GeneticAlgorithm(model, 4);
         ga.fit_predict();
     }
 }
