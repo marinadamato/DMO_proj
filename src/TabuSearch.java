@@ -1,8 +1,11 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
+import java.util.stream.*;
+import java.util.Comparator;
 
 
 public class TabuSearch {
@@ -55,6 +58,12 @@ public class TabuSearch {
         System.out.println(conflicts.entrySet());
 
     }*/
+    
+    private List<Integer> mapToList() {
+    	HashMap<Integer, Exam> exms = model.getExms();
+    	List<Integer> sortedExms = exms.entrySet().stream().sorted().map(Map.Entry::getKey).collect(Collectors.toList());
+    	return sortedExms;
+    }
 
     public int isTabu(int e, int t){
 

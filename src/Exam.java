@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Exam {
+public class Exam implements Comparable<Exam> {
 	
 	private int id;
     private ArrayList<String> students = new ArrayList<String>();
@@ -43,6 +43,13 @@ public class Exam {
     
     public String toString(){
         return this.id + ", " + this.number_st_enr;
+    }
+    
+    public int compareTo(Exam e1) {
+    	if(this.getNumber_st_enr()>=e1.getNumber_st_enr())
+    		return 1;
+    	else
+    		return 0;
     }
     
     /*@Override
