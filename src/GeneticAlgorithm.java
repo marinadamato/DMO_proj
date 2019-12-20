@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
@@ -19,7 +20,7 @@ public class GeneticAlgorithm {
 	private Map<Integer, Integer> sorted;
 	private double[] fitness;		
 	private Random rand;
-	private boolean find;
+	private boolean found;
 	private Integer[] chromosome;
 	private int nLoop;
 	private int returnBack;
@@ -50,7 +51,7 @@ public class GeneticAlgorithm {
 		this.fitness();
 		this.print_fitness();
 		
-		for(int i = 1; i<10; i++) {
+		for(int i = 1; i<15; i++) {
 			System.out.print("\n\n"+ i +"th Iteration \n");
 			this.crossover();
 			this.print_population();
@@ -98,14 +99,14 @@ public class GeneticAlgorithm {
 	
 	
 	/**
-	 * Sort Exams by the number of students enrolled to try to assign first the exams with the maximum number of student
+	 * Sort Exams by the number of students enrolled to try to assign first the exams with the biggest number of student
 	 * 
 	 */
 	private void getSortedExmToScheduleByNumStudent() {
 		HashMap<Integer,Integer> exmStuds = new HashMap<Integer, Integer>();
 		
 		for(Integer exm : model.getExms().keySet())
-			exmStuds.put(exm-1, model.getExms().get(exm).getStudents().size());
+			exmStuds.put(exm-1, model.getExms().get(exm).getNumber_st_enr());
 		
 		this.sortedExmToSchedule = exmStuds.entrySet().stream()
 			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -122,16 +123,18 @@ public class GeneticAlgorithm {
 		this.getSortedExmToScheduleByNumStudent();
 		
 			for(int c=0; c<n_chrom; c++) {
-				find = false;
+				found = false;
 				
 				chromosome = new Integer[this.n_exams];
 				nLoop = 0;
 				
-				recursiveToGenerate(population[c],0,sortedExmToSchedule.get(0), this.n_exams);
+				doRecursive(population[c],0,sortedExmToSchedule.get(0), this.n_exams);
 				
-				sortedExmToSchedule.remove(n_exams);
+				/*sortedExmToSchedule.remove(n_exams);
 				sortedExmToSchedule.add(sortedExmToSchedule.remove(0));
-				sortedExmToSchedule.add(-1);
+				sortedExmToSchedule.add(-1);*/
+				
+				Collections.swap(sortedExmToSchedule, 0, c);
 				
 				if(isFeasible(chromosome))
 					population[c] = chromosome.clone();
@@ -148,69 +151,20 @@ public class GeneticAlgorithm {
 	 * @param exam_id
 	 * @param numExamsNotAssignedYet
 	 */
-	private void recursiveToGenerate(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
-		
-		if(exam_id == this.n_exams)
-			exam_id = 0; 
-		
-		if(numExamsNotAssignedYet > 0) {
-			
-			for(/*int i = 0; i<this.n_time_slots; i++*/Integer i : getBestPath(chrom)) {
-				if(!find) {
-					if(!are_conflictual(i, exam_id, chrom)) {
-						chrom[exam_id] = i;
-						recursiveToGenerate(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
-						chrom[exam_id] = null;
-						
-						if(returnBack>0 ) {
-							returnBack--;
-							return;
-						} else
-							nLoop++; 
-		
-					} 
-				} else return;
-			}
-			
-			if(!find)
-				nLoop++; 
-			
-			if(nLoop > n_time_slots && !find)  {
-				returnBack = (int) ((int) step*Math.random());
-				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
-				nLoop = 0;
-			} 
-			
-		} else {
-			find = true;
-			chromosome = chrom.clone();
-			System.out.print("Find ");
-		}
-	}
-	
-	
-	
-	/**
-	 * Recursive method to find a feasible solution after crossover
-	 * @param chrom
-	 * @param step
-	 * @param exam_id
-	 * @param numExamsNotAssignedYet
-	 */
-	private void recursiveToCrossover(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
+	private void doRecursive(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
 			exam_id = 0;
 		
 		if(numExamsNotAssignedYet > 0) {
 			if(chrom[exam_id]!=null) 
-				recursiveToCrossover(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet);
+				doRecursive(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet);
 			else {
 				for(Integer i : getBestPath(chrom)) {
-					if(!find) {
+					if(!found) {
 						if(!are_conflictual(i, exam_id, chrom)) {
 							chrom[exam_id] = i;
-							recursiveToCrossover(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
+							doRecursive(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
 							chrom[exam_id] = null;
 							
 							if(returnBack>0 ) {
@@ -223,11 +177,11 @@ public class GeneticAlgorithm {
 					} else return;
 				}
 				
-				if(!find)
+				if(!found)
 					nLoop++; 
 				
 				
-				if(nLoop > n_time_slots && !find)  {
+				if(nLoop > n_exams && !found)  {
 					returnBack = (int) (step*Math.random());
 					//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
 					nLoop = 0;
@@ -235,8 +189,9 @@ public class GeneticAlgorithm {
 			}
 			
 		} else {
-			find = true;
+			found = true;
 			chromosome = chrom.clone();
+			System.out.print("Found ");
 		}
 	}
 	
@@ -377,10 +332,10 @@ public class GeneticAlgorithm {
 		  for(int i=0; i<2; i++) {
 			  
 			  int numExamsNotAssignedYet = (this.n_exams-(crossingSecEnd+1-crossingSecStart));
-			  find = false;
+			  found = false;
 			  chromosome = new Integer[this.n_time_slots];
 			  
-			  recursiveToCrossover(childs[i],0,sortedExmToSchedule.get(0), numExamsNotAssignedYet);
+			  doRecursive(childs[i],0,sortedExmToSchedule.get(0), numExamsNotAssignedYet);
 			  
 			  if(isFeasible(chromosome)) 
 				  childs[i] = chromosome.clone();
