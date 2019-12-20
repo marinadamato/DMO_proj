@@ -59,9 +59,10 @@ public class TabuSearch {
 
     }*/
     
-    private List<Integer> mapToList() {
+    public List<Integer> mapToList() {
     	HashMap<Integer, Exam> exms = model.getExms();
     	List<Integer> sortedExms = exms.entrySet().stream().sorted().map(Map.Entry::getKey).collect(Collectors.toList());
+    	System.out.println(sortedExms);
     	return sortedExms;
     }
 
