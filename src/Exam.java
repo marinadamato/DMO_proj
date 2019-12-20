@@ -45,11 +45,14 @@ public class Exam implements Comparable<Exam> {
         return this.id + ", " + this.number_st_enr;
     }
     
+    @Override
     public int compareTo(Exam e1) {
-    	if(this.getNumber_st_enr()>=e1.getNumber_st_enr())
-    		return 1;
+    	if(this.getNumber_st_enr()<e1.getNumber_st_enr())
+    		return -1;
     	else
-    		return 0;
+    		return 1;
+    
+    		
     }
     
     /*@Override
