@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
@@ -45,7 +46,6 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
-		this.getSortedExmToScheduleByNumStudent();
 		this.initial_population_RANDOM();
 		this.print_population();
 		this.fitness();
@@ -96,6 +96,12 @@ public class GeneticAlgorithm {
 		}
 	} */
 	
+	
+	
+	/**
+	 * Sort Exams by the number of students enrolled to try to assign first the exams with the maximum number of student
+	 * 
+	 */
 	private void getSortedExmToScheduleByNumStudent() {
 		HashMap<Integer,Integer> exmStuds = new HashMap<Integer, Integer>();
 		
@@ -113,30 +119,45 @@ public class GeneticAlgorithm {
 	
 	
 	private void initial_population_RANDOM() {
-			
+
+		this.getSortedExmToScheduleByNumStudent();
+		
 			for(int c=0; c<n_chrom; c++) {
 				find = false;
-				// int exam_id = rand.nextInt(this.n_exams);
 				
 				chromosome = new Integer[this.n_exams];
 				
 				recursiveToGenerate(population[c],0,sortedExmToSchedule.get(0), this.n_exams);
+				
+				sortedExmToSchedule.remove(n_exams);
+				sortedExmToSchedule.add(sortedExmToSchedule.remove(0));
+				sortedExmToSchedule.add(-1);
+				
 				if(isFeasible(chromosome))
 					population[c] = chromosome.clone();
 				else c--;
 			}
 			
 		}
-		
+	
+	
+	/**
+	 * Recursive method to generate population with getBestPath Method and getSortedExmToScheduleByNumStudent method
+	 * @param chrom
+	 * @param step
+	 * @param exam_id
+	 * @param numExamsNotAssignedYet
+	 */
 	private void recursiveToGenerate(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
-			exam_id = 0;
+			exam_id = 0; 
 		
 		if(numExamsNotAssignedYet > 0) {
-			for(Integer i : getBestPath(chrom)) {
-				if(!are_conflictual(i, exam_id, chrom)) {
-					if(!find) {
+			
+			for(int i = 0; i<this.n_time_slots; i++/*Integer i : getBestPath(chrom)*/) {
+				if(!find) {
+					if(!are_conflictual(i, exam_id, chrom)) {
 						chrom[exam_id] = i;
 						recursiveToGenerate(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
 						chrom[exam_id] = null;
@@ -147,8 +168,8 @@ public class GeneticAlgorithm {
 						} else if(!find)
 							nLoop++; 
 		
-					} else return;
-				}
+					} 
+				} else return;
 			}
 			
 			if(nLoop > n_time_slots)  {
@@ -160,46 +181,65 @@ public class GeneticAlgorithm {
 		} else {
 			find = true;
 			chromosome = chrom.clone();
-			System.out.print("Trovato\n");
+			System.out.print("Find ");
 		}
 	}
 	
+	
+	
+	/**
+	 * Recursive method to find a feasible solution after crossover
+	 * @param chrom
+	 * @param step
+	 * @param exam_id
+	 * @param numExamsNotAssignedYet
+	 */
 	private void recursiveToCrossover(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
 			exam_id = 0;
 		
 		if(numExamsNotAssignedYet > 0) {
-			for(int i =0; i<this.n_time_slots; i++) {
-				if(!are_conflictual(i, exam_id, chrom)) {
+			if(chrom[exam_id]!=null) 
+				recursiveToCrossover(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet);
+			else {
+				for(Integer i : getBestPath(chrom)) {
 					if(!find) {
-						chrom[exam_id] = i;
-						recursiveToCrossover(chrom, step+1, exam_id+1, numExamsNotAssignedYet-1);
-						chrom[exam_id] = null;
-						
-						if(returnBack>0 ) {
-							returnBack--;
-							return;
-						} else if(!find)
-							nLoop++; 
-		
+						if(!are_conflictual(i, exam_id, chrom)) {
+							chrom[exam_id] = i;
+							recursiveToCrossover(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
+							chrom[exam_id] = null;
+							
+							if(returnBack>0 ) {
+								returnBack--;
+								return;
+							} else if(!find)
+								nLoop++; 
+			
+						}
 					} else return;
 				}
+				
+				if(nLoop > n_time_slots)  {
+					returnBack = rand.nextInt(step);
+					//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
+					nLoop = 0;
+				} 
 			}
-			
-			if(nLoop > n_time_slots)  {
-				returnBack = (int) ((int) step*Math.random());
-				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
-				nLoop = 0;
-			} 
 			
 		} else {
 			find = true;
 			chromosome = chrom.clone();
-			System.out.print("Trovato\n");
 		}
 	}
 	
+	
+	
+	/**
+	 * 
+	 * @param chrom
+	 * @return list of sorted index exam by the student enrolled
+	 */
 	public List<Integer> getBestPath(Integer[] chrom) {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
@@ -229,7 +269,7 @@ public class GeneticAlgorithm {
 		return path;
 	}
 	
-	public void initial_population_alternative() {
+	/*public void initial_population_alternative() {
 		for(int i = 0; i < this.n_exams; i++) {
 			int count = 0;
 			for(int j = 0; j < this.n_exams; j++) {
@@ -244,8 +284,8 @@ public class GeneticAlgorithm {
 		/*sorted = n_conflict_for_exam.entrySet().stream()
 		 * .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
 		 * .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, HashMap::new));		
-		 */
-	}
+		 
+	}*/
 	
 	// This method computes fitness for each chromosomes
 	private void fitness() {
@@ -269,6 +309,25 @@ public class GeneticAlgorithm {
 			this.fitness[c] =  1 / penalty;	
 		}			
 	}
+	
+	// This method computes fitness for  chromosome
+		private double getChromFitness(Integer[] chrom) {
+			double penalty = 0;		
+			int distance = 0;
+			
+			for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
+					for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
+						distance = Math.abs(chrom[e1] - chrom[e2]);
+						if(distance <= 5) {
+							penalty += (2^(5-distance) * this.nEe[e1][e2]);
+						}
+					}
+					
+				penalty = penalty / this.n_students;
+			}	
+
+			return  (1 / penalty);	
+		}
 		
 	
 	private void crossover() {
@@ -304,19 +363,42 @@ public class GeneticAlgorithm {
 			  childs[1][i] = parents[0][i];
 		  }
 		  
-		  // Order Crossover modificato
+		  // Order Crossover modified 
+		
+		  this.getSortedExmToScheduleByNumStudent();
 		  
 		  for(int i=0; i<2; i++) {
 			  
-			  int position = crossingSecEnd+1;
-			  //int indValue = position;
-			  int numExamsNotAssignedYet = (this.n_exams-(position-crossingSecStart));
+			  int numExamsNotAssignedYet = (this.n_exams-(crossingSecEnd+1-crossingSecStart));
 			  find = false;
 			  chromosome = new Integer[this.n_time_slots];
 			  
-			  recursiveToCrossover(childs[i],0,position, numExamsNotAssignedYet);
-			  childs[i] = chromosome.clone();
+			  recursiveToCrossover(childs[i],0,sortedExmToSchedule.get(0), numExamsNotAssignedYet);
+			  
+			  if(isFeasible(chromosome)) 
+				  childs[i] = chromosome.clone();
+			  else i--;
+			  
 
+		  }
+		  
+		  // Local Search
+		  
+		  for(int k = 0; k<2; k++) {
+			  int indRand = getBadExam(childs[k]);//rand.nextInt(this.n_exams);
+			  double fitness = getChromFitness(childs[k]);
+			  Integer[] neighborhood = childs[k].clone();
+			  
+			  for(Integer t : getBestPath(neighborhood)) {
+				  if(!are_conflictual(t,indRand, neighborhood)) {
+					  neighborhood[indRand] = t;
+					  if(fitness < getChromFitness(neighborhood)) {
+						  fitness = getChromFitness(neighborhood);
+						  childs[k] = neighborhood.clone();
+					  }
+					  
+				  }
+			  }  
 		  }
 		  
 		  if(isFeasible(childs[0])) 
@@ -334,6 +416,30 @@ public class GeneticAlgorithm {
 		  }
 		 
 		return true;
+	}
+	
+	private int getBadExam(Integer[] chrome ) {
+		double worstPenalty = 0;
+		int idBadExam = 0;
+		
+		double penalty = 0;
+		int distance = 0;
+		
+		for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
+			for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
+				distance = Math.abs(chrome[e1] - chrome[e2]);
+				if(distance <= 5) {
+					penalty += (2^(5-distance) * this.nEe[e1][e2]);
+					if(penalty > worstPenalty) {
+						worstPenalty = penalty;
+						idBadExam = e1;
+					}
+				}
+			}
+			
+		}
+		
+		return idBadExam;
 	}
 	
 	private void print_population() {
