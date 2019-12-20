@@ -1,5 +1,4 @@
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
@@ -126,6 +125,7 @@ public class GeneticAlgorithm {
 				find = false;
 				
 				chromosome = new Integer[this.n_exams];
+				nLoop = 0;
 				
 				recursiveToGenerate(population[c],0,sortedExmToSchedule.get(0), this.n_exams);
 				
@@ -155,7 +155,7 @@ public class GeneticAlgorithm {
 		
 		if(numExamsNotAssignedYet > 0) {
 			
-			for(int i = 0; i<this.n_time_slots; i++/*Integer i : getBestPath(chrom)*/) {
+			for(/*int i = 0; i<this.n_time_slots; i++*/Integer i : getBestPath(chrom)) {
 				if(!find) {
 					if(!are_conflictual(i, exam_id, chrom)) {
 						chrom[exam_id] = i;
@@ -165,14 +165,17 @@ public class GeneticAlgorithm {
 						if(returnBack>0 ) {
 							returnBack--;
 							return;
-						} else if(!find)
+						} else
 							nLoop++; 
 		
 					} 
 				} else return;
 			}
 			
-			if(nLoop > n_time_slots)  {
+			if(!find)
+				nLoop++; 
+			
+			if(nLoop > n_time_slots && !find)  {
 				returnBack = (int) ((int) step*Math.random());
 				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
 				nLoop = 0;
@@ -213,15 +216,19 @@ public class GeneticAlgorithm {
 							if(returnBack>0 ) {
 								returnBack--;
 								return;
-							} else if(!find)
+							} else 
 								nLoop++; 
 			
 						}
 					} else return;
 				}
 				
-				if(nLoop > n_time_slots)  {
-					returnBack = rand.nextInt(step);
+				if(!find)
+					nLoop++; 
+				
+				
+				if(nLoop > n_time_slots && !find)  {
+					returnBack = (int) (step*Math.random());
 					//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
 					nLoop = 0;
 				} 
