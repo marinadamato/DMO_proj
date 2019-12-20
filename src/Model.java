@@ -12,6 +12,7 @@ public class Model {
     private Integer[][] nEe;
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
+	private BufferedReader br_exm, br_stu;
 
 
 
@@ -68,7 +69,7 @@ public class Model {
         String st;
         try {
             File file_exams = new File(file);
-            BufferedReader br_exm = new BufferedReader(new FileReader(file_exams));
+            br_exm = new BufferedReader(new FileReader(file_exams));
             while ((st = br_exm.readLine()) != null) {
             	if(st.length()>0){
 	                String[] parts = st.split(" ");
@@ -99,7 +100,7 @@ public class Model {
         try {
 
             File file_stud = new File(file);
-            BufferedReader br_stu = new BufferedReader(new FileReader(file_stud));
+            br_stu = new BufferedReader(new FileReader(file_stud));
             while ((st = br_stu.readLine()) != null) {
                 //System.out.println(st);
             	if(st.length()>0){
