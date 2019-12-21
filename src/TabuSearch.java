@@ -240,29 +240,35 @@ public class TabuSearch {
     }
 
     public void run() {
-        double penalty;
-        solution = fromVecttoMap(init_sol());
-        penalty = model.computePenalty(solution);
-        System.out.println("Penality:" + penalty);
-        HashMap<Integer, Integer> bestSol;
-        long diff;
+    	List<Integer> minLoc = new ArrayList<>();
+    	long diff;
         long endTime;
         long startTime = System.nanoTime();
+        double penalty;
+        HashMap<Integer, Integer> bestSol;
+        
+        for(int i=0; i<10; i++) {
+        	 solution = fromVecttoMap(init_sol());
+        	 penalty = model.computePenalty(solution);
+        	 System.out.println("Penality:" + penalty);
 
-        do{
-            bestSol = generateNeigh(solution, penalty, model.getN_timeslots());
-            endTime = System.nanoTime();
-            diff=(endTime-startTime)/1000000;
-            if(!solution.equals(bestSol)){
-                solution = bestSol;
-                penalty = model.computePenalty(bestSol);
-                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
-            }
-            else{
-                System.out.println("Minimo locale");
-                break;
-            }
-        }while(diff<300000);
+	        do{
+	            bestSol = generateNeigh(solution, penalty, model.getN_timeslots());
+	            endTime = System.nanoTime();
+	            diff=(endTime-startTime)/1000000;
+	            if(!solution.equals(bestSol)){
+	                solution = bestSol;
+	                penalty = model.computePenalty(bestSol);
+	                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
+	            }
+	            else{
+	                minLoc.addAll(bestSol.values());
+	                System.out.println("Minimo locale: " + minLoc.toString());
+	                break;
+	            }
+	        }while(true);
+        }
+       
 
     }
 }
