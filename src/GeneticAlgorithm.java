@@ -51,7 +51,7 @@ public class GeneticAlgorithm {
 		this.fitness();
 		this.print_fitness();
 		
-		for(int i = 1; i<15; i++) {
+		for(int i = 1; i<1000; i++) {
 			System.out.print("\n\n"+ i +"th Iteration \n");
 			this.crossover();
 			this.print_population();
@@ -73,7 +73,7 @@ public class GeneticAlgorithm {
 	}	
 		
 	/**
-	 * Sort Exams by the number of students enrolled to try to assign first the exams with 
+	 * Sort Exams by the number of students enrolled it, to try to assign exams first with 
 	 * the biggest average of student in conflict
 	 * 
 	 */
@@ -81,7 +81,7 @@ public class GeneticAlgorithm {
 		HashMap<Integer,Double> exmStuds = new HashMap<Integer, Double>();
 		
 		for(int i = 0; i<this.n_exams;i++)
-			exmStuds.put(i, Arrays.stream(nEe[i]).average().getAsDouble());
+			exmStuds.put(i, (double) Arrays.stream(nEe[i]).filter( c -> c>0 ).count());//Arrays.stream(nEe[i]).average().getAsDouble());
 		
 		this.sortedExmToSchedule = exmStuds.entrySet().stream()
 			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -182,7 +182,7 @@ public class GeneticAlgorithm {
 		
 		for(int i=0; i<this.n_exams; i++) {
 			if( chrom[i] != null ) {
-				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i+1).getNumber_st_enr());
+				int numStud = (numStudentTimeSlot.get(chrom[i]) +model.getExms().get(i+1).getNumber_st_enr());
 				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
 		} 
@@ -294,6 +294,7 @@ public class GeneticAlgorithm {
 		  int crossingSecStart = rand.nextInt(n_exams);
 		  int crossingSecEnd = (int) ((n_exams-crossingSecStart-1)*Math.random() + crossingSecStart);
 		  Integer[][] childs = new Integer[2][n_exams];
+		  
 		  System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
 		  
 		  // Swap crossing section between two chromosome 
@@ -327,7 +328,7 @@ public class GeneticAlgorithm {
 			  for(Integer t : getBestPath(neighborhood)) {
 				  if(!are_conflictual(t,indRand, neighborhood)) {
 					  neighborhood[indRand] = t; // change a gene to find a new chromosome 
-					  if(fitness < getChromFitness(neighborhood)) { // evaluate the fitness of the solution find in my neighborhood 
+					  if(fitness < getChromFitness(neighborhood)) { // evaluate the fitness of the solution found in my neighborhood 
 						  fitness = getChromFitness(neighborhood);
 						  childs[k] = neighborhood.clone();
 					  }
@@ -360,20 +361,22 @@ public class GeneticAlgorithm {
 	private int getBadExam(Integer[] chrome ) {
 		double worstPenalty = 0;
 		int idBadExam = 0;
-		
-		double penalty = 0;
-		int distance = 0;
+		int distance;
+		double penalty;
 		
 		for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
+			penalty = 0;
+			
 			for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
 				distance = Math.abs(chrome[e1] - chrome[e2]);
 				if(distance <= 5) {
 					penalty += (2^(5-distance) * this.nEe[e1][e2]);
-					if(penalty > worstPenalty) {
-						worstPenalty = penalty;
-						idBadExam = e1;
-					}
 				}
+			}
+
+			if(penalty > worstPenalty) {
+				worstPenalty = penalty;
+				idBadExam = e1;
 			}
 		}
 		

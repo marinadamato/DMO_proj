@@ -145,11 +145,11 @@ public class Model {
             }
         }
         
-       /* for (Integer[] row : nEe)
+       /*for (int[] row : nEe)
             // converting each row as string
             // and then printing in a separate line
-            System.out.println(Arrays.toString(row)); */
-
+            System.out.println(Arrays.toString(row)); 
+*/
         return nEe;
     }
 
