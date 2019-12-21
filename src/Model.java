@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 public class Model {
 
     private int n_timeslots;
-    private Integer[][] nEe;
+    private int[][] nEe;
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
 
@@ -25,7 +25,7 @@ public class Model {
         return this.n_timeslots;
     }
 
-    public Integer[][] getnEe(){
+    public int[][] getnEe(){
         return this.nEe;
     }
 
@@ -128,9 +128,9 @@ public class Model {
         }
     }
 
-    public Integer[][] buildNeEMatrix() {
+    public int[][] buildNeEMatrix() {
 
-        this.nEe = new Integer[exms.size()][exms.size()];
+        this.nEe = new int[exms.size()][exms.size()];
         ArrayList<String> eList, EList;
 
         for(Entry<Integer, Exam> entryExam1 : exms.entrySet()){

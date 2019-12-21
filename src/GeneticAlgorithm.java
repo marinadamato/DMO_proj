@@ -15,7 +15,7 @@ public class GeneticAlgorithm {
 	private int n_exams;
 	private int n_students;
 	private int n_time_slots;
-	private Integer[][] nEe;
+	private int[][] nEe;
 	private Map<Integer, Integer> n_conflict_for_exam = new HashMap<>();
 	private Map<Integer, Integer> sorted;
 	private double[] fitness;		
@@ -38,7 +38,6 @@ public class GeneticAlgorithm {
 		this.n_time_slots = model.getN_timeslots();
 		this.n_exams = model.getExms().size();
 		this.n_students = model.getStuds().size();
-		this.nEe = model.getnEe();	
 		this.population = new Integer[n_chrom][n_exams];	
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
@@ -46,6 +45,7 @@ public class GeneticAlgorithm {
 	}
 	
 	public void fit_predict() {
+		this.getSortedExmToScheduleByNumStudent();
 		this.initial_population_RANDOM();
 		this.print_population();
 		this.fitness();
@@ -70,43 +70,18 @@ public class GeneticAlgorithm {
 			}
 		}
 		return false;
-	}
-
-	/*// it doesn't work with instance01, it runs too much
-	private void initial_population() {	
-		int time_slot = n_time_slots;
+	}	
 		
-		for(int c=0; c<n_chrom; c++) {
-			time_slot = rand.nextInt(n_time_slots);
-			for(int e=0; e < n_exams; e++) {
-				while( are_conflictual(time_slot, e, population[c])) {
-					time_slot++;
-					// This line makes time_slot to be between 0 and n_time_slots
-					if(time_slot >= n_time_slots) {
-						time_slot = time_slot % n_time_slots;
-					}
-				}
-				population[c][e] = time_slot;
-				time_slot++;
-				if(time_slot >= n_time_slots) {
-					time_slot = time_slot % n_time_slots;
-				}
-			}
-			//System.out.print(isFeasible(population[c]))	;
-		}
-	} */
-	
-	
-	
 	/**
-	 * Sort Exams by the number of students enrolled to try to assign first the exams with the biggest number of student
+	 * Sort Exams by the number of students enrolled to try to assign first the exams with 
+	 * the biggest average of student in conflict
 	 * 
 	 */
 	private void getSortedExmToScheduleByNumStudent() {
-		HashMap<Integer,Integer> exmStuds = new HashMap<Integer, Integer>();
+		HashMap<Integer,Double> exmStuds = new HashMap<Integer, Double>();
 		
-		for(Integer exm : model.getExms().keySet())
-			exmStuds.put(exm-1, model.getExms().get(exm).getNumber_st_enr());
+		for(int i = 0; i<this.n_exams;i++)
+			exmStuds.put(i, Arrays.stream(nEe[i]).average().getAsDouble());
 		
 		this.sortedExmToSchedule = exmStuds.entrySet().stream()
 			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -119,8 +94,6 @@ public class GeneticAlgorithm {
 	
 	
 	private void initial_population_RANDOM() {
-
-		this.getSortedExmToScheduleByNumStudent();
 		
 			for(int c=0; c<n_chrom; c++) {
 				found = false;
@@ -128,13 +101,9 @@ public class GeneticAlgorithm {
 				chromosome = new Integer[this.n_exams];
 				nLoop = 0;
 				
-				doRecursive(population[c],0,sortedExmToSchedule.get(0), this.n_exams);
+				doRecursive(chromosome,0,sortedExmToSchedule.get(0), this.n_exams);
 				
-				/*sortedExmToSchedule.remove(n_exams);
-				sortedExmToSchedule.add(sortedExmToSchedule.remove(0));
-				sortedExmToSchedule.add(-1);*/
-				
-				Collections.swap(sortedExmToSchedule, 0, c);
+				// Collections.swap(sortedExmToSchedule, 0, c);
 				
 				if(isFeasible(chromosome))
 					population[c] = chromosome.clone();
@@ -145,7 +114,8 @@ public class GeneticAlgorithm {
 	
 	
 	/**
-	 * Recursive method to generate population with getBestPath Method and getSortedExmToScheduleByNumStudent method
+	 * Recursive method to generate population with getBestPath Method 
+	 * and getSortedExmToScheduleByNumStudent method
 	 * @param chrom
 	 * @param step
 	 * @param exam_id
@@ -168,21 +138,20 @@ public class GeneticAlgorithm {
 							chrom[exam_id] = null;
 							
 							if(returnBack>0 ) {
-								returnBack--;
+								returnBack--; 
 								return;
 							} else 
-								nLoop++; 
+								nLoop++; // every time i fail to assign i time slot to exam_id
 			
 						}
 					} else return;
 				}
 				
 				if(!found)
-					nLoop++; 
-				
+					nLoop++; // every time i fail a complete for cycle
 				
 				if(nLoop > n_exams && !found)  {
-					returnBack = (int) (step*Math.random());
+					returnBack = (int) (step*Math.random()); // number of time that i have to go back
 					//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
 					nLoop = 0;
 				} 
@@ -198,36 +167,35 @@ public class GeneticAlgorithm {
 	
 	
 	/**
-	 * 
+	 * Find the best order path to schedule timeslot in base al numero totale di studenti che 
+	 * sostengono esami già schedulati in un timeslot. L'idea è di cercare prima di schedulare, se possibile, 
+	 * un esame nei timeslot più affollati in modo da riservare i restanti timeslot agli esami più conflittuali
 	 * @param chrom
-	 * @return list of sorted index exam by the student enrolled
+	 * @return list of sorted timeslot by the number of students enrolled in the exam assigned yet
 	 */
 	public List<Integer> getBestPath(Integer[] chrom) {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
-		Integer t = 0;
 		
 		for(int k=0; k<this.n_time_slots;k++)
 			numStudentTimeSlot.put(k, 0);
 		
-		for(int i=1; i<this.n_exams; i++) {
-			
-			t = chrom[i-1];
-			if( t != null ) {
-				int numStud = (numStudentTimeSlot.get(t) + model.getExms().get(i).getStudents().size());
-				numStudentTimeSlot.replace(t, numStud);
+		for(int i=0; i<this.n_exams; i++) {
+			if( chrom[i] != null ) {
+				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i+1).getNumber_st_enr());
+				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
-		}
+		} 
 		
 		path =  numStudentTimeSlot.entrySet().stream()
 			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
 			    .map(Map.Entry::getKey)
 			    .collect(Collectors.toList());
 		
-		/*System.out.print(numStudentTimeSlot.entrySet().stream()
-			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-			    .map(Map.Entry::getKey)
-			    .collect(Collectors.toList())+"\n"); */
+		// if i just started and my chromosome is empty, i generate a random path
+		if(numStudentTimeSlot.values().stream().mapToInt(Integer::intValue).sum() == 0)
+			Collections.shuffle(path);
+		
 		return path;
 	}
 	
@@ -249,7 +217,10 @@ public class GeneticAlgorithm {
 		 
 	}*/
 	
-	// This method computes fitness for each chromosomes
+
+	/**
+	 * This method computes fitness for each chromosomes
+	 */
 	private void fitness() {
 		double penalty;		
 		int distance;
@@ -272,7 +243,12 @@ public class GeneticAlgorithm {
 		}			
 	}
 	
-	// This method computes fitness for  chromosome
+	
+		/**
+		 * This method computes fitness for a chromosome
+		 * @param chrom
+		 * @return
+		 */
 		private double getChromFitness(Integer[] chrom) {
 			double penalty = 0;		
 			int distance = 0;
@@ -297,7 +273,7 @@ public class GeneticAlgorithm {
 		double minValueP1 = fitness[0], minValueP2 = fitness[0];
 		Integer[][] parents = new Integer[2][n_exams];
 		
-		
+		// Find the two worst fitness in my population
 		  for(int i=0;i<fitness.length;i++){
 			  if(fitness[i] < minValueP1){
 				  minValueP1 = fitness[i];
@@ -314,21 +290,19 @@ public class GeneticAlgorithm {
 		  }
 		  parents[1] = population[indParent2].clone();
 		  
+		  // Calculate a random crossing section
 		  int crossingSecStart = rand.nextInt(n_exams);
 		  int crossingSecEnd = (int) ((n_exams-crossingSecStart-1)*Math.random() + crossingSecStart);
 		  Integer[][] childs = new Integer[2][n_exams];
 		  System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
 		  
-		  // Swap crossing section two chromosome 
+		  // Swap crossing section between two chromosome 
 		  for(int i = crossingSecStart; i <= crossingSecEnd; i++) {
 			  childs[0][i] = parents[1][i];
 			  childs[1][i] = parents[0][i];
 		  }
 		  
 		  // Order Crossover modified 
-		
-		  this.getSortedExmToScheduleByNumStudent();
-		  
 		  for(int i=0; i<2; i++) {
 			  
 			  int numExamsNotAssignedYet = (this.n_exams-(crossingSecEnd+1-crossingSecStart));
@@ -339,22 +313,21 @@ public class GeneticAlgorithm {
 			  
 			  if(isFeasible(chromosome)) 
 				  childs[i] = chromosome.clone();
-			  else i--;
+			  else i--; 
 			  
 
 		  }
 		  
-		  // Local Search
-		  
+		  // Local Search 
 		  for(int k = 0; k<2; k++) {
-			  int indRand = getBadExam(childs[k]);//rand.nextInt(this.n_exams);
+			  int indRand = getBadExam(childs[k]); // take the exam that has the worst weight in fitness formula and i try to improve it
 			  double fitness = getChromFitness(childs[k]);
 			  Integer[] neighborhood = childs[k].clone();
 			  
 			  for(Integer t : getBestPath(neighborhood)) {
 				  if(!are_conflictual(t,indRand, neighborhood)) {
-					  neighborhood[indRand] = t;
-					  if(fitness < getChromFitness(neighborhood)) {
+					  neighborhood[indRand] = t; // change a gene to find a new chromosome 
+					  if(fitness < getChromFitness(neighborhood)) { // evaluate the fitness of the solution find in my neighborhood 
 						  fitness = getChromFitness(neighborhood);
 						  childs[k] = neighborhood.clone();
 					  }
@@ -363,11 +336,9 @@ public class GeneticAlgorithm {
 			  }  
 		  }
 		  
-		  if(isFeasible(childs[0])) 
-			  population[indParent1] = childs[0].clone();
-		  
-		  if(isFeasible(childs[1]))
-			  population[indParent2] = childs[1].clone();
+		  // Replace my bad chromosomes in the population with the new. 
+		  population[indParent1] = childs[0].clone();
+		  population[indParent2] = childs[1].clone();
 		
 	}
 	
@@ -380,6 +351,12 @@ public class GeneticAlgorithm {
 		return true;
 	}
 	
+	
+	/**
+	 * Take the exam that has the worst weight in the fitness formula
+	 * @param chrome
+	 * @return
+	 */
 	private int getBadExam(Integer[] chrome ) {
 		double worstPenalty = 0;
 		int idBadExam = 0;
@@ -398,7 +375,6 @@ public class GeneticAlgorithm {
 					}
 				}
 			}
-			
 		}
 		
 		return idBadExam;
