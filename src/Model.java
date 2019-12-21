@@ -197,7 +197,7 @@ public class Model {
         return 0;
     }
 
-    public Integer[] initialSol(){
+/*    public Integer[] initialSol(){
         Integer[] solution = new Integer[exms.size()];
         for(int i=0; i<solution.length; i++) {
         	solution[i] = -1;
@@ -219,7 +219,7 @@ public class Model {
 
         System.out.println("Initial solution: " + solution.toString());
         return solution;
-    }
+    }*/
 
     public double computePenalty(HashMap<Integer, Integer> solution){
         int dist;

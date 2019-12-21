@@ -13,7 +13,7 @@ public class Timetabling {
         model.loadStu("test.stu");
         model.buildNeEMatrix();
         TabuSearch ts = new TabuSearch(1, model);
-        ts.mapToList();
+        ts.run();
         //ts.run();
     }
 }

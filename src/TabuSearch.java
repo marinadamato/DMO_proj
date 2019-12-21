@@ -13,9 +13,14 @@ import java.util.Comparator.*;
 public class TabuSearch {
     private ArrayList<TLelement> tabulist = new ArrayList<>();
     private HashMap<Integer, Integer> solution = new HashMap<>();
-    private HashMap<Pair<Exam, Exam>, Integer> conflicts = new HashMap<>();
+    private List<Integer> srtExms = new ArrayList<>();
+    private Integer[] prov_sol;
+    //private HashMap<Pair<Exam, Exam>, Integer> conflicts = new HashMap<>(); 
     private int timelimit;
     private Model model;
+    private boolean find;
+    private int returnBack;
+    private int nLoop;
 
     public TabuSearch(int timelimit, Model model) {
         this.timelimit = timelimit;
@@ -64,11 +69,84 @@ public class TabuSearch {
     public List<Integer> mapToList() {
     	HashMap<Integer, Exam> exms = model.getExms();
     	List<Integer> sortedExms = exms.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey).collect(Collectors.toList());
-    	for(Integer i : sortedExms) {
+    	/*for(Integer i : sortedExms) {
     		System.out.println(i + ", " + exms.get(i).getNumber_st_enr());
-    	}
+    	}*/
+    	sortedExms.add(-1);
     	return sortedExms;
     }
+    
+    private boolean are_conflictual(int time_slot, int exam_id, Integer[] sol) {		
+		for(int e = 0; e < model.getExms().size(); e++) {
+			if(e != exam_id && sol[e]!=null) {
+				if(sol[e] == time_slot && model.areConflictual(e+1, exam_id+1)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+    
+private void recursiveToGenerate(Integer[] sol,int step, int exam_id, int numExamsNotAssignedYet) {
+		
+		if(exam_id == model.getExms().size())
+			exam_id = 0; 
+		
+		if(numExamsNotAssignedYet > 0) {
+			
+			for(int i = 0; i<model.getN_timeslots(); i++) {
+				if(!find) {
+					if(!are_conflictual(i, exam_id, sol)) {
+						sol[exam_id] = i;
+						recursiveToGenerate(sol, step+1, srtExms.get(step+1), numExamsNotAssignedYet-1);
+						sol[exam_id] = null;
+						
+						if(returnBack>0 ) {
+							returnBack--;
+							return;
+						} else if(!find)
+							nLoop++; 
+		
+					} 
+				} else return;
+			}
+			
+			if(nLoop > model.getN_timeslots())  {
+				returnBack = (int) ((int) step*Math.random());
+				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
+				nLoop = 0;
+			} 
+			
+		} else {
+			find = true;
+			prov_sol = sol.clone();
+			System.out.print("Find ");
+		}
+	}
+
+	private boolean isFeasible(Integer[] sol) {
+		 for(int e = 0; e<model.getExms().size(); e++) {
+			  if(sol[e] == null || are_conflictual(sol[e], e, sol))
+				  return false;
+		  }
+		 
+		return true;
+	}
+
+	public Integer[] init_sol(){
+		find = false;
+		prov_sol = new Integer[model.getExms().size()];
+		Integer[] sol = new Integer[model.getExms().size()];
+		srtExms = mapToList();
+		do {
+			recursiveToGenerate(sol,0,srtExms.get(0), model.getExms().size());
+		}while(!isFeasible(prov_sol));
+		String stampa = "";
+		for(Integer el : prov_sol)
+			stampa += el + " ";
+		System.out.println("Initial solution: " + stampa);
+		return prov_sol;
+	}
 
     public int isTabu(int e, int t){
 
@@ -123,7 +201,7 @@ public class TabuSearch {
 
     public void run() {
         double penalty;
-        solution = fromVecttoMap(model.initialSol());
+        solution = fromVecttoMap(init_sol());
         penalty = model.computePenalty(solution);
         System.out.println("Penality:" + penalty);
         HashMap<Integer, Integer> bestSol;
