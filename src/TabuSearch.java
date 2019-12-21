@@ -1,13 +1,14 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import javafx.util.Pair;
+//import java.util.Map.Entry;
+//import java.util.concurrent.TimeUnit;
+//import javafx.util.Pair;
 import java.util.stream.*;
-import java.util.Comparator.*;
+//import java.util.Comparator.*;
 
 
 public class TabuSearch {
@@ -87,40 +88,79 @@ public class TabuSearch {
 		return false;
 	}
     
-private void recursiveToGenerate(Integer[] sol,int step, int exam_id, int numExamsNotAssignedYet) {
+    /**
+	 * Find the best order path to schedule timeslot in base al numero totale di studenti che 
+	 * sostengono esami già schedulati in un timeslot. L'idea è di cercare prima di schedulare, se possibile, 
+	 * un esame nei timeslot più affollati in modo da riservare i restanti timeslot agli esami più conflittuali
+	 * @param chrom
+	 * @return list of sorted timeslot by the number of students enrolled in the exam assigned yet
+	 */
+	public List<Integer> getBestPath(Integer[] chrom) {
+		List<Integer> path;
+		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
+		
+		for(int k=0; k<model.getN_timeslots();k++)
+			numStudentTimeSlot.put(k, 0);
+		
+		for(int i=0; i<model.getExms().size(); i++) {
+			if( chrom[i] != null ) {
+				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i+1).getNumber_st_enr());
+				numStudentTimeSlot.replace(chrom[i], numStud);
+			}
+		} 
+		
+		path =  numStudentTimeSlot.entrySet().stream()
+			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+			    .map(Map.Entry::getKey)
+			    .collect(Collectors.toList());
+		
+		// if i just started and my chromosome is empty, i generate a random path
+		if(numStudentTimeSlot.values().stream().mapToInt(Integer::intValue).sum() == 0)
+			Collections.shuffle(path);
+		
+		return path;
+	}
+    
+	private void doRecursive(Integer[] sol,int step, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == model.getExms().size())
-			exam_id = 0; 
+			exam_id = 0;
 		
 		if(numExamsNotAssignedYet > 0) {
+			if(sol[exam_id]!=null) 
+				doRecursive(sol, step+1, srtExms.get(step+1), numExamsNotAssignedYet);
+			else {
+				for(Integer i : getBestPath(sol)) {
+					if(!find) {
+						if(!are_conflictual(i, exam_id, sol)) {
+							sol[exam_id] = i;
+							doRecursive(sol, step+1, srtExms.get(step+1), numExamsNotAssignedYet-1);
+							sol[exam_id] = null;
+							
+							if(returnBack>0 ) {
+								returnBack--; 
+								return;
+							} else 
+								nLoop++; // every time i fail to assign i time slot to exam_id
 			
-			for(int i = 0; i<model.getN_timeslots(); i++) {
-				if(!find) {
-					if(!are_conflictual(i, exam_id, sol)) {
-						sol[exam_id] = i;
-						recursiveToGenerate(sol, step+1, srtExms.get(step+1), numExamsNotAssignedYet-1);
-						sol[exam_id] = null;
-						
-						if(returnBack>0 ) {
-							returnBack--;
-							return;
-						} else if(!find)
-							nLoop++; 
-		
-					} 
-				} else return;
+						}
+					} else return;
+				}
+				
+				if(!find)
+					nLoop++; // every time i fail a complete for cycle
+				
+				if(nLoop > model.getExms().size() && !find)  {
+					returnBack = (int) (step*Math.random()); // number of time that i have to go back
+					//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
+					nLoop = 0;
+				} 
 			}
-			
-			if(nLoop > model.getN_timeslots())  {
-				returnBack = (int) ((int) step*Math.random());
-				//System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
-				nLoop = 0;
-			} 
 			
 		} else {
 			find = true;
 			prov_sol = sol.clone();
-			System.out.print("Find ");
+			System.out.print("Found ");
 		}
 	}
 
@@ -139,7 +179,7 @@ private void recursiveToGenerate(Integer[] sol,int step, int exam_id, int numExa
 		Integer[] sol = new Integer[model.getExms().size()];
 		srtExms = mapToList();
 		do {
-			recursiveToGenerate(sol,0,srtExms.get(0), model.getExms().size());
+			doRecursive(sol,0,srtExms.get(0), model.getExms().size());
 		}while(!isFeasible(prov_sol));
 		String stampa = "";
 		for(Integer el : prov_sol)
