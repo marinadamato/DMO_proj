@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -68,8 +69,14 @@ public class TabuSearch {
     }*/
     
     public List<Integer> mapToList() {
-    	HashMap<Integer, Exam> exms = model.getExms();
-    	List<Integer> sortedExms = exms.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey).collect(Collectors.toList());
+    	HashMap<Integer, Exam> ex = model.getExms();
+    	
+    	/*HashMap<Integer, Double> ex = new HashMap<Integer, Double>();
+    	for(int i = 0; i<ex.size();i++)
+    		ex.put(i, (double) Arrays.stream(model.getLineFromMatrix(i)).filter( c -> c>0 ).count());//Arrays.stream(nEe[i]).average().getAsDouble());*/
+		
+    	
+    	List<Integer> sortedExms = ex.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey).collect(Collectors.toList());
     	/*for(Integer i : sortedExms) {
     		System.out.println(i + ", " + exms.get(i).getNumber_st_enr());
     	}*/
@@ -240,7 +247,7 @@ public class TabuSearch {
     }
 
     public void run() {
-    	List<Integer> minLoc = new ArrayList<>();
+    	HashMap<Integer, List<Integer>> minLoc = new HashMap<Integer, List<Integer>>();
     	long diff;
         long endTime;
         long startTime = System.nanoTime();
@@ -262,7 +269,8 @@ public class TabuSearch {
 	                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
 	            }
 	            else{
-	                minLoc.addAll(bestSol.values());
+	            	List<Integer> toPut = new ArrayList<Integer>(bestSol.values());
+	                minLoc.put(i, toPut);
 	                System.out.println("Minimo locale: " + minLoc.toString());
 	                break;
 	            }

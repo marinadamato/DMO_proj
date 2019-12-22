@@ -153,6 +153,10 @@ public class Model {
 
         return nEe;
     }
+    
+    public Integer[] getLineFromMatrix(int i) {
+    	return this.nEe[i];
+    }
 
     public int getRandomNumberUsingNextInt(int min, int max) {
         Random random = new Random();
