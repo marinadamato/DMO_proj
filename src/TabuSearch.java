@@ -270,8 +270,14 @@ public class TabuSearch {
 	            }
 	            else{
 	            	List<Integer> toPut = new ArrayList<Integer>(bestSol.values());
-	                minLoc.put(i, toPut);
+	            	if(!minLoc.containsValue(toPut)) {
+	            		System.out.println("Min inserted!");
+	            		minLoc.put(i, toPut);
+	            	}
+	            	else
+	            		System.out.println("Min already present!");
 	                System.out.println("Minimo locale: " + minLoc.toString());
+	                System.out.println();
 	                break;
 	            }
 	        }while(true);
