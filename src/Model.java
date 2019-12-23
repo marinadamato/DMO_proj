@@ -141,7 +141,9 @@ public class Model {
                     eList.retainAll(EList);
 
                     nEe[entryExam1.getKey()-1][entryExam2.getKey()-1] = eList.size();
-                }
+                }else
+                	nEe[entryExam1.getKey()-1][entryExam2.getKey()-1] = Integer.MAX_VALUE;
+                
             }
         }
         
@@ -205,7 +207,7 @@ public class Model {
         return solution;
     }
 
-    public double computePenalty(Integer[] solution){
+    /*public double computePenalty(Integer[] solution){
         int dist;
         double penalty=0;
         for (int i=0; i<nEe.length-1; i++){
@@ -215,6 +217,28 @@ public class Model {
                         dist = Math.abs(solution[i]-solution[j]);
                         if(dist<=5)
                         penalty += Math.pow(2, 5-dist)*nEe[i][j]/studs.size();
+                    }
+                }
+            }
+        }
+
+        return penalty;
+    }*/
+    
+    public double computePenalty(HashMap<Integer, Integer> solution){
+        int dist;
+        double penalty=0;
+        double res=0;
+        for (int i=0; i<nEe.length-1; i++){
+            for (int j=i+1; j<nEe.length; j++){
+                if(i!=j){
+                    if (nEe[i][j]!=0){
+                        dist = Math.abs(solution.get(i+1)-solution.get(j+1));
+                        if(dist<=5){
+                            res = Math.pow(2, 5-dist);
+                            res = res*nEe[i][j]/studs.size();
+                            penalty += res;
+                        }
                     }
                 }
             }
