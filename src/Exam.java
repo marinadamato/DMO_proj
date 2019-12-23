@@ -3,20 +3,16 @@ import java.util.ArrayList;
 
 public class Exam {
 	
-	private int id;
+	private String id;
     private ArrayList<String> students = new ArrayList<String>();
     private int number_st_enr;
 
-    public Exam(int id, int number_st_enr) {
+    public Exam(String id, int number_st_enr) {
         this.id=id;
         this.number_st_enr=number_st_enr;
     }
 
-    public void setID(int id) {
-        this.id = id;
-    }
-
-    public int getID(){
+    public String getID(){
         return this.id;
     }
 

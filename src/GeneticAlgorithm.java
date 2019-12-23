@@ -23,6 +23,7 @@ public class GeneticAlgorithm {
 	private int nLoop;
 	private int returnBack;
 	private List<Integer> sortedExmToSchedule;
+	private TabuSearch ts;
 	 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -40,6 +41,7 @@ public class GeneticAlgorithm {
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
 		this.rand  = new Random();
+		this.ts = new TabuSearch(1, model);
 	}
 	
 	public void fit_predict() {
@@ -223,7 +225,7 @@ private void doRecursiveCrossover(Integer[] parent, Integer[] chrom,int step, in
 		
 		for(int i=0; i<this.n_exams; i++) {
 			if( chrom[i] != null ) {
-				int numStud = (numStudentTimeSlot.get(chrom[i]) +model.getExms().get(i+1).getNumber_st_enr());
+				int numStud = (numStudentTimeSlot.get(chrom[i]) +model.getExms().get(i).getNumber_st_enr());
 				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
 		} 
@@ -376,7 +378,7 @@ private void doRecursiveCrossover(Integer[] parent, Integer[] chrom,int step, in
 		  
 		  // Local Search 
 
-		  this.fitness();
+		  /*this.fitness();
 		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble()/Arrays.stream(this.fitness).max().getAsDouble());
 		  
 		  if(rapp>0.5) {
@@ -396,13 +398,14 @@ private void doRecursiveCrossover(Integer[] parent, Integer[] chrom,int step, in
 					  }
 				  }  
 			  } 
-		  }
+		  }*/
+		  
 		  // Replace my bad chromosomes in the population with the new. 
 		  //if(getChromFitness(childs[0]) > getChromFitness(population[indParent1]))
-			  population[indParent1] = childs[0].clone();
+			  population[indParent1] = ts.run(childs[0]);
 		  
 		 // if(getChromFitness(childs[1]) > getChromFitness(population[indParent2]))
-			  population[indParent2] = childs[1].clone();
+			  population[indParent2] = ts.run(childs[1]);
 		
 	}
 	

@@ -12,11 +12,7 @@ public class Model {
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
 
-
-
     public Model() {
-
-        this.n_timeslots = 0;
         exms = new HashMap<Integer, Exam>();
         studs = new HashSet<String>();
     }
@@ -37,20 +33,12 @@ public class Model {
         return this.studs;
     }
 
-    public static boolean isNumeric(String str) {
-        try {
-            Integer.parseInt(str);
-            return true;
-        } catch(NumberFormatException e){
-            return false;
-        }
-    }
-
     public boolean loadSlo(String file) {
         String st;
         try {
             File file_time = new File(file);
             BufferedReader br_t = new BufferedReader(new FileReader(file_time));
+            
             while ((st = br_t.readLine()) != null)
                 n_timeslots = Integer.parseInt(st);
             br_t.close();
@@ -58,38 +46,34 @@ public class Model {
             return true;
 
         } catch (IOException e) {
-            System.err.println("Errore nella lettura del file");
+            System.err.println("Errore nella lettura del file slo");
             return false;
         }
     }
 
     public boolean loadExm(String file) {
         String st;
+        int id = 0;
         try {
             File file_exams = new File(file);
             BufferedReader br_exm = new BufferedReader(new FileReader(file_exams));
             while ((st = br_exm.readLine()) != null) {
             	if(st.length()>0){
 	                String[] parts = st.split(" ");
-	                if(parts.length != 2) throw new IOException();
-	                for(int i=0; i<parts.length; i++) {
-	                    if(!isNumeric(parts[i])) throw new IOException();
-	                    //else System.out.println(parts[i]);
-	                }
-	                int id = Integer.parseInt(parts[0]);
 	                int nStudents = Integer.parseInt(parts[1]);
-	                Exam e = new Exam(id, nStudents);
+	                Exam e = new Exam(parts[0], nStudents);
+	                
 	                ArrayList<String> students = new ArrayList<String>();
 	                e.setStudents(students);
-	                exms.put(id, e);
-	                //ex_st.put(id, students);
+	                
+	                exms.put(id++, e);
             	}
             }
             br_exm.close();
             
             return true;
         } catch (IOException e) {
-            System.err.println("Errore nella lettura del file");
+            System.err.println("Errore nella lettura del file exm");
             return false;
         }
     }
@@ -104,26 +88,20 @@ public class Model {
                 //System.out.println(st);
             	if(st.length()>0){
 	                String[] parts = st.split(" ");
-	                if(parts.length != 2) throw new IOException();
-	                if(!isNumeric(parts[1]) || isNumeric(parts[0])) throw new IOException();
-	                //else {
-	                //System.out.println(parts[0]);
-	                //System.out.println(parts[1]);
-	                //}
 	                String idS = parts[0];
-	                int idE = Integer.parseInt(parts[1]);
+	                int idE = Integer.parseInt(parts[1])-1;
+	                
 	                if(!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
 	                    studs.add(idS);
 	                    exms.get(idE).addStudent(idS);
-	                }
-	                else throw new IOException();
+	                } else throw new IOException();
             	}
             }
             br_stu.close();
             return true;
 
         } catch (IOException e) {
-            System.err.println("Errore nella lettura del file");
+            System.err.println("Errore nella lettura del file stu");
             return false;
         }
     }
@@ -140,9 +118,9 @@ public class Model {
                     EList = new ArrayList<>(entryExam2.getValue().getStudents());
                     eList.retainAll(EList);
 
-                    nEe[entryExam1.getKey()-1][entryExam2.getKey()-1] = eList.size();
+                    nEe[entryExam1.getKey()][entryExam2.getKey()] = eList.size();
                 }else
-                	nEe[entryExam1.getKey()-1][entryExam2.getKey()-1] = Integer.MAX_VALUE;
+                	nEe[entryExam1.getKey()][entryExam2.getKey()] = Integer.MAX_VALUE;
                 
             }
         }
@@ -161,86 +139,34 @@ public class Model {
     }
 
     public Boolean areConflictual(int e1, int e2){
-        if (nEe[e1-1][e2-1] != 0 && e1!=e2)
+        if (nEe[e1][e2] != 0 && e1!=e2)
             return true;
         else
             return false;
     }
 
-    public int checkVal(HashMap<Integer, Integer> solution, int nSlots, int e){
-        boolean isConflict;
+    public boolean checkVal(Integer[] solution, int nSlots, int e){
 
-        if(!solution.isEmpty()){
-            for(Map.Entry<Integer,Integer> entry : solution.entrySet())
-            {
-                if(entry.getValue().equals(nSlots))
-                {
-                    isConflict = areConflictual(e, entry.getKey());
-                    if (isConflict){
-                        return 1;
-                    }
-                }
-            }
-        }
-        else
-            return 0;
-        return 0;
+    	if(Arrays.stream(solution).mapToInt(Integer::intValue).sum() > 0){
+            for(int i = 0; i < solution.length; i++)
+            	if(solution[i] == nSlots)
+                    if (areConflictual(e, i))
+                        return true;
+        } else
+            return false;
+        return false;
     }
 
-    public HashMap<Integer, Integer> initialSol(){
-        HashMap<Integer, Integer> solution = new HashMap<>();
-        int nExam = exms.size();
-        int nSlots;
-        int flag=0;
-
-        for (Integer e : exms.keySet()){
-            flag = 1;
-            nSlots = getRandomNumberUsingNextInt(1, n_timeslots+1);
-            while(flag!=0){
-                flag = checkVal(solution, nSlots, e);
-                solution.put(e, nSlots);
-                nSlots = getRandomNumberUsingNextInt(1, n_timeslots+1);
-            }
-        }
-
-        System.out.println("Initial solution: " + solution.toString());
-        return solution;
-    }
-
-    /*public double computePenalty(Integer[] solution){
-        int dist;
-        double penalty=0;
-        for (int i=0; i<nEe.length-1; i++){
-            for (int j=i+1; j<nEe.length; j++){
-                if(i!=j){
-                    if (nEe[i][j]!=0){
-                        dist = Math.abs(solution[i]-solution[j]);
-                        if(dist<=5)
-                        penalty += Math.pow(2, 5-dist)*nEe[i][j]/studs.size();
-                    }
-                }
-            }
-        }
-
-        return penalty;
-    }*/
     
-    public double computePenalty(HashMap<Integer, Integer> solution){
+    public double computePenalty(Integer[] solution){
         int dist;
         double penalty=0;
-        double res=0;
-        for (int i=0; i<nEe.length-1; i++){
-            for (int j=i+1; j<nEe.length; j++){
-                if(i!=j){
-                    if (nEe[i][j]!=0){
-                        dist = Math.abs(solution.get(i+1)-solution.get(j+1));
-                        if(dist<=5){
-                            res = Math.pow(2, 5-dist);
-                            res = res*nEe[i][j]/studs.size();
-                            penalty += res;
-                        }
-                    }
-                }
+        
+        for (int i=0; i<this.exms.size(); i++){
+            for (int j=i+1; j<this.exms.size(); j++){
+                dist = Math.abs(solution[i]-solution[j]);
+                if(dist<=5)
+                    penalty += Math.pow(2, 5-dist)*nEe[i][j]/studs.size();
             }
         }
 
