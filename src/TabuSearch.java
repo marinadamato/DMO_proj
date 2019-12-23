@@ -69,14 +69,17 @@ public class TabuSearch {
     }*/
     
     public List<Integer> mapToList() {
-    	HashMap<Integer, Exam> ex = model.getExms();
+    	//HashMap<Integer, Exam> ex = model.getExms();
     	
-    	/*HashMap<Integer, Double> ex = new HashMap<Integer, Double>();
-    	for(int i = 0; i<ex.size();i++)
+    	HashMap<Integer, Double> ex = new HashMap<Integer, Double>();
+    	for(int i = 0; i<model.getExms().size();i++)
     		ex.put(i, (double) Arrays.stream(model.getLineFromMatrix(i)).filter( c -> c>0 ).count());//Arrays.stream(nEe[i]).average().getAsDouble());*/
 		
     	
-    	List<Integer> sortedExms = ex.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey).collect(Collectors.toList());
+    	List<Integer> sortedExms = ex.entrySet().stream()
+    			.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+    			.map(Map.Entry::getKey)
+    			.collect(Collectors.toList());
     	/*for(Integer i : sortedExms) {
     		System.out.println(i + ", " + exms.get(i).getNumber_st_enr());
     	}*/
@@ -111,7 +114,7 @@ public class TabuSearch {
 		
 		for(int i=0; i<model.getExms().size(); i++) {
 			if( chrom[i] != null ) {
-				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i+1).getNumber_st_enr());
+				int numStud = (int) (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i).getNumber_st_enr());
 				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
 		} 
@@ -129,10 +132,6 @@ public class TabuSearch {
 	}
     
 	private void doRecursive(Integer[] sol,int step, int exam_id, int numExamsNotAssignedYet) {
-		
-		if(exam_id == model.getExms().size())
-			exam_id = 0;
-		
 		if(numExamsNotAssignedYet > 0) {
 			if(sol[exam_id]!=null) 
 				doRecursive(sol, step+1, srtExms.get(step+1), numExamsNotAssignedYet);
@@ -185,13 +184,14 @@ public class TabuSearch {
 		prov_sol = new Integer[model.getExms().size()];
 		Integer[] sol = new Integer[model.getExms().size()];
 		srtExms = mapToList();
+		
 		do {
 			doRecursive(sol,0,srtExms.get(0), model.getExms().size());
-		}while(!isFeasible(prov_sol));
-		String stampa = "";
-		for(Integer el : prov_sol)
-			stampa += el + " ";
-		System.out.println("Initial solution: " + stampa);
+		
+		} while(!isFeasible(prov_sol));
+		
+		System.out.println("Initial solution: " + Arrays.toString(prov_sol));
+		
 		return prov_sol;
 	}
 

@@ -8,8 +8,7 @@ import java.util.Map.Entry;
 public class Model {
 
     private int n_timeslots;
-    private int[][] population;
-    private Integer[][] nEe;
+    private int[][] nEe;
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
 	private BufferedReader br_exm, br_stu;
@@ -27,7 +26,7 @@ public class Model {
         return this.n_timeslots;
     }
 
-    public Integer[][] getnEe(){
+    public int[][] getnEe(){
         return this.nEe;
     }
 
@@ -83,7 +82,7 @@ public class Model {
 	                Exam e = new Exam(id, nStudents);
 	                ArrayList<String> students = new ArrayList<String>();
 	                e.setStudents(students);
-	                exms.put(id, e);
+	                exms.put(id-1, e);
 	                //ex_st.put(id, students);
             	}
             }
@@ -112,7 +111,7 @@ public class Model {
 	                //System.out.println(parts[1]);
 	                //}
 	                String idS = parts[0];
-	                int idE = Integer.parseInt(parts[1]);
+	                int idE = Integer.parseInt(parts[1])-1;
 	                if(!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
 	                    studs.add(idS);
 	                    exms.get(idE).addStudent(idS);
@@ -129,9 +128,9 @@ public class Model {
         }
     }
 
-    public Integer[][] buildNeEMatrix() {
+    public int[][] buildNeEMatrix() {
 
-        this.nEe = new Integer[exms.size()][exms.size()];
+        this.nEe = new int[exms.size()][exms.size()];
         ArrayList<String> eList, EList;
 
         for(Entry<Integer, Exam> entryExam1 : exms.entrySet()){
@@ -141,20 +140,20 @@ public class Model {
                     EList = new ArrayList<>(entryExam2.getValue().getStudents());
                     eList.retainAll(EList);
 
-                    nEe[entryExam1.getKey()-1][entryExam2.getKey()-1] = eList.size();
+                    nEe[entryExam1.getKey()][entryExam2.getKey()] = eList.size();
                 }
             }
         }
 
-        for (Integer[] row : nEe)
+       /* for (Integer[] row : nEe)
             // converting each row as string
             // and then printing in a separate line
-            System.out.println(Arrays.toString(row));
+            System.out.println(Arrays.toString(row)); */
 
         return nEe;
     }
     
-    public Integer[] getLineFromMatrix(int i) {
+    public int[] getLineFromMatrix(int i) {
     	return this.nEe[i];
     }
 
@@ -239,8 +238,6 @@ public class Model {
                             res = res*nEe[i][j]/studs.size();
                             penalty += res;
                         }
-                        else
-                            penalty += 0;
                     }
                 }
             }
