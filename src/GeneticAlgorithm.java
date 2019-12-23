@@ -233,7 +233,7 @@ public class GeneticAlgorithm {
 				for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
 					distance = Math.abs(population[c][e1] - population[c][e2]);
 					if(distance <= 5) {
-						penalty += (2^(5-distance) * this.nEe[e1][e2]);
+						penalty += (Math.pow(2, (5-distance))* this.nEe[e1][e2]);
 					}
 				}
 				
@@ -257,7 +257,7 @@ public class GeneticAlgorithm {
 					for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
 						distance = Math.abs(chrom[e1] - chrom[e2]);
 						if(distance <= 5) {
-							penalty += (2^(5-distance) * this.nEe[e1][e2]);
+							penalty += ( Math.pow(2, 5-distance) * this.nEe[e1][e2]);
 						}
 					}
 					
