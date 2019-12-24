@@ -279,7 +279,7 @@ public class TabuSearch {
 		                // System.out.println();
 		                break;
 	            	}
-	        }while(true);//iteration <this.n_exams); 
+	        }while(true);
 	        // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
             
 
