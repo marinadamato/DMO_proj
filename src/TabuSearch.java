@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.*;
 
-import javax.swing.event.ListSelectionEvent;
-
 
 public class TabuSearch {
-    private ArrayList<TLelement> tabulist = new ArrayList<>();
+    private ArrayList<TLelement> tabulist;
     private Integer[] solution;
     private List<Integer> srtExms = new ArrayList<>();
     private Integer[] prov_sol;
@@ -22,35 +20,14 @@ public class TabuSearch {
     private int nLoop;
     private int n_exams;
 	private int n_timeslots;
+	private HashMap<Integer, Integer[]> minLoc;
 
     public TabuSearch(int timelimit, Model model) {
         this.timelimit = timelimit;
         this.model = model;
         this.n_exams = model.getExms().size();
         this.n_timeslots = model.getN_timeslots();
-    }
-
-    public void addTL(TLelement tl){
-        tabulist.add(tl);
-    }
-
-    private Integer[] fromMaptoVect(HashMap<Integer, Integer> sol) {
-    	Integer[] newsol = new Integer[sol.keySet().size()];
-    	for(Map.Entry<Integer,Integer> entry : sol.entrySet()) {
-    		newsol[entry.getKey()] = entry.getValue();
-    	}
-    	return newsol;
-    }
-    
-    private HashMap<Integer, Integer> fromVecttoMap(Integer[] sol) {
-    	 HashMap<Integer, Integer> newsol = new HashMap<>();
-    	 for(int i=0; i < sol.length; i++) {
-    		 newsol.put(i, sol[i]);
-    		 
-    	 }
-    	
-    	
-    	return newsol;
+        this.minLoc = new HashMap<Integer, Integer[]>();
     }
     
     /**
@@ -69,14 +46,14 @@ public class TabuSearch {
 			    .map(Map.Entry::getKey)
 			    .collect(Collectors.toList());
 		
-		this.srtExms.add(-1);
+		//this.srtExms.add(-1);
 		
 	}
     
-    private boolean are_conflictual(int time_slot, int exam_id, Integer[] sol) {		
-		for(int e = 0; e < model.getExms().size(); e++) {
-			if(e != exam_id && sol[e]!=null) {
-				if(sol[e] == time_slot && model.areConflictual(e, exam_id)) {
+    private boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {		
+    	for(int e = 0; e < this.n_exams; e++) {
+			if(e != exam_id && chrom[e]!=null) {
+				if(chrom[e] == time_slot && this.model.getnEe()[e][exam_id] > 0) {
 					return true;
 				}
 			}
@@ -156,14 +133,6 @@ public class TabuSearch {
 		}
 	}
 
-	private boolean isFeasible(Integer[] sol) {
-		 for(int e = 0; e<model.getExms().size(); e++) {
-			  if(sol[e] == null || are_conflictual(sol[e], e, sol))
-				  return false;
-		  }
-		 
-		return true;
-	}
 
 	public Integer[] init_sol(Integer[] chrom){
 		find = false;
@@ -183,46 +152,44 @@ public class TabuSearch {
 		return prov_sol;
 	}
 
-    public int isTabu(int e, int t){
+    public boolean isTabu(int e, int t){
 
-        int flag=0;
-        for(TLelement el:tabulist){
-            if(el.getE() == e && el.getTimeslot() == t){
-                flag=1;
-                return 1;
-            }
-        }
-        if(flag==0)
-            return 0;
-        return 0;
+        for(TLelement el :tabulist)
+            if(el.equals(new TLelement(e, t)))
+                return true;
+        
+        return false;
     }
 
-    public Integer[] generateNeigh(Integer[] solution, double penalty){
-        double bestP=Integer.MAX_VALUE;
-        double newP;
-        int tabumove;
+    public Integer[] generateNeigh(Integer[] chrom){
+        double bestPenalty=Integer.MAX_VALUE;
+        double theBestPenalty = model.computePenalty(chrom);;
+        double newPenalty;
         TLelement tl = new TLelement(-1, -1);
 
-        Integer[] bestSol = solution.clone();
+        Integer[] bestSol = chrom.clone();
+        getSortedExmToScheduleByNumStudent();
         
-        for(int e = 0; e<this.n_exams; e++){
-        	Integer[] newSol = solution.clone();
+        for(int e : getBadExams(bestSol)) {//= 0; e<this.n_exams; e++){ // exam
+        	Integer[] newSol = bestSol.clone();
             
-            for(int i=0; i<n_timeslots; i++){
-                if(i!=e){
-                    
-                    if(model.checkVal(newSol, i, e)) {
+            for(int i : getBestPath(newSol)) { // time slot
+                if(i != chrom[e]){
+                    if(!are_conflictual(i, e, newSol)) {
                         newSol[e]= i;
-                        newP = model.computePenalty(newSol);
-                        tabumove = isTabu(e, i);
+                        newPenalty = model.computePenalty(newSol);
                         
-                        if (newP <= bestP) {
-                            if (tabumove == 0 || (tabumove == 1 && newP < penalty)) {
-                                tl.setE(e);
-                                tl.setTimeslot(i);
+                        if (Double.compare(newPenalty, bestPenalty) < 0 ) {
+                            if (!isTabu(e, i) || (isTabu(e, i) 
+                            		&& Double.compare(newPenalty, theBestPenalty) < 0)) {
                                 
-                                bestP = newP;
-                                bestSol = newSol;
+                            	tl = new TLelement(e, i);
+                                bestPenalty = newPenalty;
+                                bestSol = newSol.clone();
+                                
+                                if(Double.compare(bestPenalty, theBestPenalty)<0)
+                                	theBestPenalty = bestPenalty;
+                                
                             }
                         }
                     }
@@ -230,51 +197,89 @@ public class TabuSearch {
             }
         }
 
-        System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
-        if(tl.getE()!=0 && tl.getTimeslot()!=0)
-            this.addTL(tl);
-        System.out.println();
+        // System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
+        
+        if(tl.getE() > -1 )
+        	tabulist.add(tl);
+        
+        if(tabulist.size()>this.n_timeslots)
+        	tabulist.remove(0);
+        
+        // System.out.println();
         
         return bestSol;
     }
+    
+    private List<Integer> getBadExams(Integer[] chrome ) {
+		List<Integer> idBadExams ;
+		HashMap<Integer,Double> sortExam = new HashMap<Integer, Double>();
+		int distance;
+		double penalty;
+		
+		for(int e1 = 0; e1 < n_exams; e1++) { // For each exams
+			penalty = 0;
+			
+			for(int e2 = e1 + 1; e2 < n_exams; e2++) { // For each other exams
+				distance = Math.abs(chrome[e1] - chrome[e2]);
+				if(distance <= 5) {
+					penalty += (Math.pow(2, (5-distance)) * this.model.getnEe()[e1][e2]);
+				}
+			}
+
+			sortExam.put(e1, penalty);
+		}
+		
+		idBadExams = sortExam.entrySet().stream()
+	    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+	    .map(Map.Entry::getKey)
+	    .collect(Collectors.toList());
+		
+		return idBadExams;
+	}
+    
+    private boolean isMinLocalYet(Integer[] solution) {
+    	for(Integer[] mL : minLoc.values())
+    		if(Arrays.equals(mL, solution))
+    			return true;
+    		
+    	return false;
+    }
 
     public Integer[] run(Integer[] chrom) {
-    	HashMap<Integer, Integer[]> minLoc = new HashMap<Integer, Integer[]>();
-    	long diff;
-        long endTime;
-        long startTime = System.nanoTime();
+    	// minLoc = new HashMap<Integer, Integer[]>();
+    	tabulist = new ArrayList<>();
         double penalty;
         
-        Integer[] toPut;
         Integer[] bestSol;
-        int i = 0;
-        //for(int i=0; i<10; i++) {
+        
         	 solution = chrom;
         	 penalty = model.computePenalty(solution);
-        	 System.out.println("Penality:" + penalty);
+        	 // System.out.println("Penality:" + penalty);
 
 	        do{
-	            bestSol = generateNeigh(solution, penalty);
-	            endTime = System.nanoTime();
-	            diff=(endTime-startTime)/1000000;
-	            if(!solution.equals(bestSol)){
-	                solution = bestSol;
-	                penalty = model.computePenalty(bestSol);
-	                System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
-	            }
-	            else{
-	            	if(!minLoc.containsValue(bestSol)) {
+	            bestSol = generateNeigh(solution.clone());
+	            
+	            if(!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
+	                solution = bestSol.clone();
+	                penalty = model.computePenalty(solution.clone());
+            		minLoc.put(minLoc.size(), bestSol.clone());
+            		
+	                // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
+	            
+	            } else /* if(!isMinLocalYet(bestSol)) {
 	            		System.out.println("Min inserted!");
-	            		minLoc.put(i, bestSol.clone());
+	            		minLoc.put(minLoc.size(), bestSol.clone());
+	            	} else */ {
+	            		// System.out.println("Min already present!");
+	                
+		            	// System.out.println("Minimo locale: " + minLoc.toString());
+		                // System.out.println();
+		                break;
 	            	}
-	            	else
-	            		System.out.println("Min already present!");
-	                System.out.println("Minimo locale: " + minLoc.toString());
-	                System.out.println();
-	                break;
-	            }
-	        }while(true);
-        //}
-	        return  bestSol.clone();
+	        }while(true);//iteration <this.n_exams); 
+	        // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
+            
+
+	        return  solution.clone();
     }
 }

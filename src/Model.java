@@ -11,8 +11,11 @@ public class Model {
     private int[][] nEe;
     private HashMap<Integer, Exam> exms;
     private HashSet<String> studs;
+    long timeStart;
 
     public Model() {
+    	super();
+    	this.timeStart = System.currentTimeMillis();
         exms = new HashMap<Integer, Exam>();
         studs = new HashSet<String>();
     }
@@ -138,25 +141,6 @@ public class Model {
         return random.nextInt(max - min) + min;
     }
 
-    public Boolean areConflictual(int e1, int e2){
-        if (nEe[e1][e2] != 0 && e1!=e2)
-            return true;
-        else
-            return false;
-    }
-
-    public boolean checkVal(Integer[] solution, int nSlots, int e){
-
-    	if(Arrays.stream(solution).mapToInt(Integer::intValue).sum() > 0){
-            for(int i = 0; i < solution.length; i++)
-            	if(solution[i] == nSlots)
-                    if (areConflictual(e, i))
-                        return true;
-        } else
-            return false;
-        return false;
-    }
-
     
     public double computePenalty(Integer[] solution){
         int dist;
@@ -166,9 +150,11 @@ public class Model {
             for (int j=i+1; j<this.exms.size(); j++){
                 dist = Math.abs(solution[i]-solution[j]);
                 if(dist<=5)
-                    penalty += Math.pow(2, 5-dist)*nEe[i][j]/studs.size();
+                    penalty += (Math.pow(2, 5-dist)*nEe[i][j]);
             }
         }
+        
+        penalty =penalty/studs.size();
 
         return penalty;
     }
