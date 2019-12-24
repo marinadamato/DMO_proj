@@ -10,7 +10,7 @@ public class Timetabling {
 		model.loadStu("Instances/instance01.stu");
 		model.buildNeEMatrix();
 
-		GeneticAlgorithm ga = new GeneticAlgorithm(model, 6);
+		GeneticAlgorithm ga = new GeneticAlgorithm(model, 4);
 		ga.fit_predict();
 	}
 }

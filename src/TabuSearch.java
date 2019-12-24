@@ -170,25 +170,25 @@ public class TabuSearch {
         Integer[] bestSol = chrom.clone();
         getSortedExmToScheduleByNumStudent();
         
-        for(int e : getBadExams(bestSol)) {//= 0; e<this.n_exams; e++){ // exam
-        	Integer[] newSol = bestSol.clone();
+        for(int e : getBadExams(chrom)) {// exam
+        	Integer[] newSol = chrom.clone();
             
-            for(int i : getBestPath(newSol)) { // time slot
+            for(int i = 0; i<this.n_timeslots;i++) {//: getBestPath(newSol)) { // time slot
                 if(i != chrom[e]){
                     if(!are_conflictual(i, e, newSol)) {
                         newSol[e]= i;
                         newPenalty = model.computePenalty(newSol);
                         
-                        if (Double.compare(newPenalty, bestPenalty) < 0 ) {
+                        if (newPenalty < bestPenalty ) {
                             if (!isTabu(e, i) || (isTabu(e, i) 
-                            		&& Double.compare(newPenalty, theBestPenalty) < 0)) {
+                            		&& newPenalty < theBestPenalty)) {
                                 
                             	tl = new TLelement(e, i);
                                 bestPenalty = newPenalty;
                                 bestSol = newSol.clone();
                                 
-                                if(Double.compare(bestPenalty, theBestPenalty)<0)
-                                	theBestPenalty = bestPenalty;
+                                //if(Double.compare(bestPenalty, theBestPenalty)<0)
+                                //	theBestPenalty = bestPenalty;
                                 
                             }
                         }
@@ -197,7 +197,7 @@ public class TabuSearch {
             }
         }
 
-        // System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
+         //System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
         
         if(tl.getE() > -1 )
         	tabulist.add(tl);
@@ -205,7 +205,7 @@ public class TabuSearch {
         if(tabulist.size()>this.n_timeslots)
         	tabulist.remove(0);
         
-        // System.out.println();
+         //System.out.println();
         
         return bestSol;
     }
@@ -248,28 +248,31 @@ public class TabuSearch {
     public Integer[] run(Integer[] chrom) {
     	// minLoc = new HashMap<Integer, Integer[]>();
     	tabulist = new ArrayList<>();
-        double penalty;
+        double currentPenalty;
+        double newPenalty = Integer.MAX_VALUE;
         
         Integer[] bestSol;
         
         	 solution = chrom;
-        	 penalty = model.computePenalty(solution);
+        	 currentPenalty = model.computePenalty(solution);
         	 // System.out.println("Penality:" + penalty);
 
 	        do{
 	            bestSol = generateNeigh(solution.clone());
+	            newPenalty = model.computePenalty(bestSol);
+	            if(!Arrays.equals(solution,bestSol) || !isMinLocalYet(bestSol) ){
+	            	if(newPenalty < currentPenalty) {
+		            	minLoc.put(minLoc.size(), bestSol.clone());
+	            		solution = bestSol.clone();
+	            		currentPenalty = newPenalty;
+	            	}
+	                 //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
 	            
-	            if(!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
-	                solution = bestSol.clone();
-	                penalty = model.computePenalty(solution.clone());
-            		minLoc.put(minLoc.size(), bestSol.clone());
-            		
-	                // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
-	            
-	            } else /* if(!isMinLocalYet(bestSol)) {
-	            		System.out.println("Min inserted!");
-	            		minLoc.put(minLoc.size(), bestSol.clone());
-	            	} else */ {
+	            } else {
+	            	//if(!isMinLocalYet(bestSol)) {
+	            		//System.out.println("Min inserted!");
+	            	//	minLoc.put(minLoc.size(), bestSol.clone());
+	            	//}  // else  
 	            		// System.out.println("Min already present!");
 	                
 		            	// System.out.println("Minimo locale: " + minLoc.toString());
