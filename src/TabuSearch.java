@@ -30,8 +30,11 @@ public class TabuSearch {
     }
 
     public void addTL(TLelement tl){
-        tabulist.add(tl);
-    }
+	    if(tabulist.size()>=10) {
+	     tabulist.remove(0);
+	    }
+	    tabulist.add(tl);
+   }
 
     private Integer[] fromMaptoVect(HashMap<Integer, Integer> sol) {
     	Integer[] newsol = new Integer[sol.keySet().size()];
@@ -246,7 +249,7 @@ public class TabuSearch {
         return bestSol;
     }
 
-    public void run() {
+    public void run() throws InterruptedException {
     	HashMap<Integer, List<Integer>> minLoc = new HashMap<Integer, List<Integer>>();
     	long diff;
         long endTime;
@@ -263,7 +266,7 @@ public class TabuSearch {
 	            bestSol = generateNeigh(solution, penalty, model.getN_timeslots());
 	            endTime = System.nanoTime();
 	            diff=(endTime-startTime)/1000000;
-	            if(!solution.equals(bestSol)){
+	            if(penalty != model.computePenalty(bestSol)){
 	                solution = bestSol;
 	                penalty = model.computePenalty(bestSol);
 	                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
@@ -271,8 +274,9 @@ public class TabuSearch {
 	            else{
 	            	List<Integer> toPut = new ArrayList<Integer>(bestSol.values());
 	            	if(!minLoc.containsValue(toPut)) {
-	            		System.out.println("Min inserted!");
+	            		System.out.println("Min inserted!"); 
 	            		minLoc.put(i, toPut);
+	            		Thread.sleep(5000);
 	            	}
 	            	else
 	            		System.out.println("Min already present!");
