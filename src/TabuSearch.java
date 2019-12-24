@@ -211,6 +211,60 @@ public class TabuSearch {
             return 0;
         return 0;
     }
+    
+    public HashMap<Integer, Integer> generateNewSol(Integer exam, HashMap<Integer, Integer> solution){
+    	HashMap<Integer, Integer> newSol = (HashMap<Integer, Integer>)solution.clone();
+    	int timeslot = newSol.get(exam);
+    	if(timeslot!=0)
+    		newSol.replace(exam, timeslot-1);
+    	if(timeslot!=model.getN_timeslots())
+    		newSol.replace(exam, timeslot+1);
+    	return newSol;
+    }
+    
+    public HashMap<Integer, Integer> newgenerateNeigh(HashMap<Integer, Integer> solution, double penalty, int n_timeslots){
+    	double bestP=0;
+        double newP=0;
+        int tabumove;
+        TLelement tl = new TLelement(0, 0);
+        HashMap<Integer, Integer> newSol = new HashMap<Integer, Integer>();
+        HashMap<Integer, Integer> bestSol = new HashMap<Integer, Integer>();
+        
+        for(Map.Entry<Integer,Integer> entry : solution.entrySet()){
+        	newSol = (HashMap<Integer, Integer>)solution.clone();
+        	int timeslot = newSol.get(entry.getKey());
+        	if(timeslot!=1 && model.checkVal(fromMaptoVect(newSol), timeslot-1, entry.getKey()-1)==0) {
+        		newSol.replace(entry.getKey(), timeslot-1);
+        		newP = model.computePenalty(newSol);
+        		tabumove = isTabu(entry.getKey(), timeslot-1);
+            	if(newP>bestP) {
+            		if(tabumove == 0 || (tabumove == 1 && newP < penalty)) {
+	            		bestP = newP;
+	            		bestSol = (HashMap<Integer, Integer>)newSol.clone();
+	            		tl.setE(entry.getKey());
+                        tl.setTimeslot(timeslot-1);
+            		}
+            	}
+        	}
+        	newSol = (HashMap<Integer, Integer>)solution.clone();
+        	if(timeslot!=n_timeslots && model.checkVal(fromMaptoVect(newSol), timeslot+1, entry.getKey()-1)==0) {
+        		newSol.replace(entry.getKey(), timeslot+1);
+        		newP = model.computePenalty(newSol);
+        		tabumove = isTabu(entry.getKey(), timeslot+1);
+            	if(newP>bestP) {
+            		bestP = newP;
+            		bestSol = (HashMap<Integer, Integer>)newSol.clone();
+            		tl.setE(entry.getKey());
+                    tl.setTimeslot(timeslot+1);
+            	}
+        	}
+        }
+        System.out.println("Elemento da inserire nella tl:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
+        if(tl.getE()!=0 && tl.getTimeslot()!=0)
+            this.addTL(tl);
+        System.out.println();
+        return bestSol;
+    }
 
     public HashMap<Integer, Integer> generateNeigh(HashMap<Integer, Integer> solution, double penalty, int n_timeslots){
         double bestP=0;
@@ -297,8 +351,7 @@ public class TabuSearch {
 	    	            		System.out.println("Min already present!");
 	    	                System.out.println();
 	    	                break;
-	            		}
-	            			
+	            		}			
 	            	}
 	            	else
 	            		rip = 0;
