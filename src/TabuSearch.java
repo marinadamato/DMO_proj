@@ -30,7 +30,7 @@ public class TabuSearch {
     }
 
     public void addTL(TLelement tl){
-	    if(tabulist.size()>=10) {
+	    if(tabulist.size()>=100) {
 	     tabulist.remove(0);
 	    }
 	    tabulist.add(tl);
@@ -248,27 +248,62 @@ public class TabuSearch {
         System.out.println();
         return bestSol;
     }
+    
+    private Integer[] toIntArray(List<Integer> list){
+    	Integer[] ret = new Integer[list.size()];
+	  for(int i = 0;i < ret.length;i++)
+	    ret[i] = list.get(i);
+	  return ret;
+	}
+    
+    private void print_minLoc(HashMap<Integer, List<Integer>> minLoc) {
+    	for(Map.Entry<Integer, List<Integer>> e : minLoc.entrySet()) {
+    		System.out.println("Num iterazione: " + e.getKey() + " - Minimo: " + e.getValue());
+    		System.out.println("Con penalità: " + model.computePenalty(fromVecttoMap(toIntArray(e.getValue()))));
+    	}
+    }
 
     public void run() throws InterruptedException {
     	HashMap<Integer, List<Integer>> minLoc = new HashMap<Integer, List<Integer>>();
     	long diff;
         long endTime;
         long startTime = System.nanoTime();
-        double penalty;
+        double penalty, newpenalty;
+        int rip;
         HashMap<Integer, Integer> bestSol;
         
         for(int i=0; i<10; i++) {
         	 solution = fromVecttoMap(init_sol());
         	 penalty = model.computePenalty(solution);
         	 System.out.println("Penality:" + penalty);
-
+        	 rip = 0;
 	        do{
 	            bestSol = generateNeigh(solution, penalty, model.getN_timeslots());
 	            endTime = System.nanoTime();
 	            diff=(endTime-startTime)/1000000;
-	            if(penalty != model.computePenalty(bestSol)){
+	            newpenalty = model.computePenalty(bestSol);
+	            if(penalty != newpenalty){
+	            	if(newpenalty>=(penalty-0.1) && newpenalty<=(penalty+0.1)) {
+	            		rip++;
+	            		if(rip>200) {
+	            			solution = bestSol;
+	            			List<Integer> toPut = new ArrayList<Integer>(bestSol.values());
+	    	            	if(!minLoc.containsValue(toPut)) {
+	    	            		System.out.println("Min inserted!"); 
+	    	            		minLoc.put(i, toPut);
+	    	            		Thread.sleep(2000);
+	    	            	}
+	    	            	else
+	    	            		System.out.println("Min already present!");
+	    	                System.out.println();
+	    	                break;
+	            		}
+	            			
+	            	}
+	            	else
+	            		rip = 0;
 	                solution = bestSol;
-	                penalty = model.computePenalty(bestSol);
+	                penalty = newpenalty;
 	                System.out.println("Actual solution: " + solution.toString() + "\nWith penalty: " + penalty);
 	            }
 	            else{
@@ -276,17 +311,16 @@ public class TabuSearch {
 	            	if(!minLoc.containsValue(toPut)) {
 	            		System.out.println("Min inserted!"); 
 	            		minLoc.put(i, toPut);
-	            		Thread.sleep(5000);
+	            		Thread.sleep(2000);
 	            	}
 	            	else
 	            		System.out.println("Min already present!");
-	                System.out.println("Minimo locale: " + minLoc.toString());
+	                //System.out.println("Minimo locale: " + minLoc.toString());
 	                System.out.println();
 	                break;
 	            }
 	        }while(true);
         }
-       
-
+       print_minLoc(minLoc);
     }
 }
