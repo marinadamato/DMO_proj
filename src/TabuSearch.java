@@ -163,12 +163,11 @@ public class TabuSearch {
 
     public Integer[] generateNeigh(Integer[] chrom){
         double bestPenalty=Integer.MAX_VALUE;
-        double theBestPenalty = model.computePenalty(chrom);;
+        double initialPenalty = model.computePenalty(chrom);;
         double newPenalty;
         TLelement tl = new TLelement(-1, -1);
 
         Integer[] bestSol = chrom.clone();
-        getSortedExmToScheduleByNumStudent();
         
         for(int e : getBadExams(chrom)) {// exam
         	Integer[] newSol = chrom.clone();
@@ -181,7 +180,7 @@ public class TabuSearch {
                         
                         if (newPenalty < bestPenalty ) {
                             if (!isTabu(e, i) || (isTabu(e, i) 
-                            		&& newPenalty < theBestPenalty)) {
+                            		&& newPenalty < initialPenalty)) {
                                 
                             	tl = new TLelement(e, i);
                                 bestPenalty = newPenalty;
@@ -197,7 +196,7 @@ public class TabuSearch {
             }
         }
 
-         //System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
+        System.out.println("Elemento da inserire nella TL:\nesame: " + tl.getE() + " timeslot: " + tl.getTimeslot());
         
         if(tl.getE() > -1 )
         	tabulist.add(tl);
@@ -205,7 +204,7 @@ public class TabuSearch {
         if(tabulist.size()>this.n_timeslots)
         	tabulist.remove(0);
         
-         //System.out.println();
+         System.out.println();
         
         return bestSol;
     }
@@ -250,6 +249,8 @@ public class TabuSearch {
     	tabulist = new ArrayList<>();
         double currentPenalty;
         double newPenalty = Integer.MAX_VALUE;
+        double optPenalty = newPenalty;
+        Integer[] optSolution = chrom;
         
         Integer[] bestSol;
         
@@ -260,29 +261,29 @@ public class TabuSearch {
 	        do{
 	            bestSol = generateNeigh(solution.clone());
 	            newPenalty = model.computePenalty(bestSol);
-	            if(!Arrays.equals(solution,bestSol) || !isMinLocalYet(bestSol) ){
-	            	if(newPenalty < currentPenalty) {
-		            	minLoc.put(minLoc.size(), bestSol.clone());
-	            		solution = bestSol.clone();
-	            		currentPenalty = newPenalty;
-	            	}
-	                 //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
 	            
+	            if(!Arrays.equals(solution,bestSol) || !isMinLocalYet(bestSol) ){
+	            	currentPenalty = newPenalty;
+	            	solution = bestSol.clone();
+	                System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + currentPenalty);
+	            	
+	                if(currentPenalty<optPenalty)
+	                	optSolution = bestSol.clone();
 	            } else {
-	            	//if(!isMinLocalYet(bestSol)) {
-	            		//System.out.println("Min inserted!");
-	            	//	minLoc.put(minLoc.size(), bestSol.clone());
-	            	//}  // else  
+	            	if(!isMinLocalYet(bestSol)) {
+	            		System.out.println("Min inserted!");
+	            		minLoc.put(minLoc.size(), bestSol.clone());
+	            	}  // else  
 	            		// System.out.println("Min already present!");
 	                
 		            	// System.out.println("Minimo locale: " + minLoc.toString());
 		                // System.out.println();
 		                break;
-	            	}
+	            }
 	        }while(true);
 	        // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
             
 
-	        return  solution.clone();
+	        return  optSolution;
     }
 }
