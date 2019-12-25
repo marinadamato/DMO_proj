@@ -43,7 +43,7 @@ public class GeneticAlgorithm {
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
 		this.rand  = new Random();
-		this.ts = new TabuSearch(1, model);
+		this.ts = new TabuSearch(this.model);
 		this.bestBenchmark = Double.MIN_VALUE;
 	}
 	
@@ -57,12 +57,12 @@ public class GeneticAlgorithm {
 		int i = 0;
 		
 		while(true) {
-			System.out.print("\n\n"+ i++ +"th Iteration - Time: "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
+			System.out.print("\n"+ i++ +"th Iteration - Time: "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
 			
 			this.crossover();
 			this.fitness();
-			this.print_population();
-			this.print_banchmark();
+			//this.print_population();
+			//this.print_banchmark();
 		}
 
 	}
@@ -140,7 +140,7 @@ public class GeneticAlgorithm {
 					return;
 				}
 			} else {
-				for(Integer i : getBestPath(chrom)) { //timeslot
+				for(int i : getBestPath(chrom)) { //timeslot
 					if(!found) {
 						if(!are_conflictual(i, exam_id, chrom)) {
 							chrom[exam_id] = i;
@@ -170,7 +170,7 @@ public class GeneticAlgorithm {
 		} else {
 			found = true;
 			chromosome = chrom.clone();
-			System.out.print("Found ");
+			//System.out.print("Found ");
 		}
 	}
 	
@@ -179,17 +179,23 @@ public class GeneticAlgorithm {
 		if(numExamsNotAssignedYet > 0 && exam_id>-1) {
 			if(chrom[exam_id]!=null) 
 				doRecursiveCrossover(parent, chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet);
-			else if(!are_conflictual(parent[exam_id], exam_id, chrom)) {
-				chrom[exam_id] = parent[exam_id];
-				doRecursiveCrossover(parent, chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);		
-				if(returnBack>0 ) {
-					returnBack--; 
-					return;
+			else {
+				
+				if(!are_conflictual(parent[exam_id], exam_id, chrom)) {
+					chrom[exam_id] = parent[exam_id];
+					doRecursiveCrossover(parent, chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
+					chrom[exam_id] = null;
+					
+					if(returnBack>0 ) {
+						returnBack--; 
+						return;
+					} else 
+						nLoop++; 
 				}
-			} else {
-				for(int i = 0; i<this.n_time_slots; i++) {//Integer i : getBestPath(chrom)) {
+				
+				for(Integer i : getBestPath(chrom)) {
 					if(!found) {
-						if(!are_conflictual(i, exam_id, chrom)) {
+						if(!are_conflictual(i, exam_id, chrom) && parent[exam_id] != i) {
 							chrom[exam_id] = i;
 							doRecursiveCrossover(parent, chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet-1);
 							chrom[exam_id] = null;
@@ -234,12 +240,12 @@ public class GeneticAlgorithm {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 		
-		for(int k=0; k<this.n_time_slots;k++)
+		for(int k=1; k<=this.n_time_slots;k++)
 			numStudentTimeSlot.put(k, 0);
 		
 		for(int i=0; i<this.n_exams; i++) {
 			if( chrom[i] != null ) {
-				int numStud = (numStudentTimeSlot.get(chrom[i]) +model.getExms().get(i).getNumber_st_enr());
+				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i).getNumber_st_enr());
 				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
 		} 
@@ -255,24 +261,6 @@ public class GeneticAlgorithm {
 		
 		return path;
 	}
-	
-	/*public void initial_population_alternative() {
-		for(int i = 0; i < this.n_exams; i++) {
-			int count = 0;
-			for(int j = 0; j < this.n_exams; j++) {
-				if(i != j) {
-					if(this.nEe[i][j] != 0) {
-						count++;
-					}
-				}
-			}
-			n_conflict_for_exam.put(i, count);
-		}
-		/*sorted = n_conflict_for_exam.entrySet().stream()
-		 * .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-		 * .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, HashMap::new));		
-		 
-	}*/
 	
 
 	/**
@@ -331,11 +319,12 @@ public class GeneticAlgorithm {
 		if(Arrays.stream(fitness).filter(c -> c>0).max().getAsDouble() > bestBenchmark)
 			bestBenchmark = Arrays.stream(fitness).filter(c -> c>0).max().getAsDouble();
 		
-		for(int i=0; i<this.n_chrom; i++)
-			  if(getChromFitness(population[i])>bestBenchmark)
-				  bestSolution = population[i].clone();
+		/*for(int i=0; i<this.n_chrom; i++)
+			  if(getChromFitness(population[i])>=bestBenchmark) 
+				  bestSolution = population[i].clone();*/
+				  
 		
-		System.out.print("Best Bench: "+1/bestBenchmark+"\nBest Solution: "+Arrays.toString(bestSolution)+"\n\n");
+		System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
 		
 		int indParent1 = 0, indParent2 = 0;
 		double minValueP1 = Double.MAX_VALUE, minValueP2 = Double.MAX_VALUE;
@@ -363,7 +352,7 @@ public class GeneticAlgorithm {
 		  int crossingSecEnd = (int) ((n_exams-crossingSecStart-1)*Math.random() + crossingSecStart);
 		  Integer[][] childs = new Integer[2][n_exams];
 		  
-		  System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
+		  // System.out.print("Crossing Section: " + crossingSecStart + " - " + crossingSecEnd + "\n");
 		  
 		  
 		  // Swap crossing section between two chromosome 
@@ -374,6 +363,8 @@ public class GeneticAlgorithm {
 		
 		  // Order Crossover modified 
 		  for(int i=0; i<2; i++) {
+			  //getSortedExmToScheduleByNumStudent();
+			  //int k = 0;
 			  
 			  do {
 				  int numExamsNotAssignedYet = (this.n_exams-(crossingSecEnd+1-crossingSecStart));
@@ -381,6 +372,11 @@ public class GeneticAlgorithm {
 				  chromosome = new Integer[this.n_exams];
 				  
 				  doRecursive(childs[i],0,sortedExmToSchedule.get(0), numExamsNotAssignedYet);
+				  
+				  //Collections.swap(sortedExmToSchedule, 0, k++);
+				  
+				  //if(k > this.n_exams)
+					//  return;
 			  
 			  } while(!isFeasible(chromosome)) ;
 			
@@ -415,10 +411,10 @@ public class GeneticAlgorithm {
 		  
 		  
 		  this.fitness();
-		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble()
+		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
 				  /Arrays.stream(this.fitness).max().getAsDouble());
 		  
-		  if(rapp>0.8) {
+		  if(rapp>0.75) {
 		  // Replace my bad chromosomes in the population with the new. 
 		  //if(getChromFitness(childs[0]) > getChromFitness(population[indParent1]))
 			  population[indParent1] = ts.run(childs[0]).clone();
@@ -430,7 +426,7 @@ public class GeneticAlgorithm {
 			  population[indParent2] = childs[1].clone();
 		  }
 		  
-		  if((System.currentTimeMillis()-model.timeStart) > (180*1000))
+		  if((System.currentTimeMillis()-model.timeStart) > (300*1000))
 			  System.exit(1);
 		  
 	}

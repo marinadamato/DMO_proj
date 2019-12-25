@@ -158,5 +158,46 @@ public class Model {
 
         return penalty;
     }
+    
+    public Boolean areConflictual(int e1, int e2){
+        if (nEe[e1-1][e2-1] != 0 && e1!=e2)
+            return true;
+        else
+            return false;
+    }
+    
+    public int checkVal(Integer[] solution, int nSlots, int e){
+    	for(int i = 0; i < solution.length; i++)
+                if(solution[i] == nSlots)
+                    if (nEe[e][i] != 0 && e!=i)
+                        return 1;
+        
+        return 0;
+    }
+    
+    public double computePenalty(HashMap<Integer, Integer> solution){
+        int dist;
+        double penalty=0;
+        double res=0;
+        for (int i=0; i<nEe.length; i++){
+            for (int j=i+1; j<nEe.length; j++){
+                if(i!=j){
+                    if (nEe[i][j]!=0){
+                        dist = Math.abs(solution.get(i+1)-solution.get(j+1));
+                        if(dist<=5){
+                            res = Math.pow(2, 5-dist)*nEe[i][j]/studs.size();
+                            penalty += res;
+                        }
+                    }
+                }
+            }
+        }
+
+        return penalty;
+    }
+    
+    public int[] getLineFromMatrix(int i) {
+    	return this.nEe[i];
+    }
 
 }
