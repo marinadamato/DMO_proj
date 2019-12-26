@@ -412,7 +412,7 @@ public class GeneticAlgorithm {
 		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
 				  /Arrays.stream(this.fitness).max().getAsDouble());
 		  
-		  if(rapp>0.75) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
+		  if(rapp>0.5) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
 			  
 			  //if(getChromFitness(childs[0]) > getChromFitness(population[indParent1]))
 			  population[indParent1] = ts.run(childs[0]).clone();
@@ -424,7 +424,7 @@ public class GeneticAlgorithm {
 			  population[indParent2] = childs[1].clone();
 		  }
 		  
-		  if((System.currentTimeMillis()-model.timeStart) > (300*1000)) // termino il programma dopo 300s 
+		  if((System.currentTimeMillis()-model.timeStart) > (180*1000)) // termino il programma dopo 300s 
 			  System.exit(1);
 		  
 	}

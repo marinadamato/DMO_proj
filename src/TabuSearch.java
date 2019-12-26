@@ -63,7 +63,7 @@ public class TabuSearch {
 	 * un esame nei timeslot più affollati in modo da riservare i restanti timeslot agli esami più conflittuali
 	 * @param chrom
 	 * @return list of sorted timeslot by the number of students enrolled in the exam assigned yet
-	 */
+	 */ /*
 	public List<Integer> getBestPath(Integer[] chrom) {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
@@ -89,7 +89,7 @@ public class TabuSearch {
 		
 		return path;
 	}
-	
+	*/
 	// uno dei dei principali problemi del tabusearch iniziale era che risultava lentissimo. Per ogni iterazione si andava
 	// a calcolare la penalità dell'intera soluzione (n-esami*timeslot volte). Per ridurre il carico, ora mi 
 	// vado a calcolare solo la penalità generata dal un singolo esame
@@ -110,7 +110,7 @@ public class TabuSearch {
 	// genero il vicinato
     public Integer[] generateNeigh(Integer[] chrom){
         double bestPenalty=Integer.MIN_VALUE;
-        double theBestPenalty = model.computePenalty(chrom);
+        double theBestPenalty = 0;
         double newPenalty;
         double actualPenalty;
         TLelement tl = new TLelement(-1, -1); // inizializzo elemento della tabù list;
@@ -138,8 +138,10 @@ public class TabuSearch {
                             bestPenalty = (actualPenalty - newPenalty);
                             bestSol = newSol.clone();
                             
-                            if(Double.compare(bestPenalty, theBestPenalty)>0)
+                            if(bestPenalty > theBestPenalty) {
                             	theBestPenalty = bestPenalty;
+                            	 // System.out.print("\n"+theBestPenalty);
+                            }
                             
                         }
                     }
@@ -218,7 +220,7 @@ public class TabuSearch {
         double currentPenalty;
         double newPenalty = Integer.MAX_VALUE;
         double optPenalty = newPenalty;
-        avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)-1; // valore che mi serve per definire la dimensione della tabulist
+        avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)/2; // valore che mi serve per definire la dimensione della tabulist
         
         Integer[] optSolution = chrom;
         Integer[] bestSol;
