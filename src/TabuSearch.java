@@ -112,7 +112,7 @@ public class TabuSearch {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 		
-		for(int k=0; k<model.getN_timeslots();k++)
+		for(int k=1; k<=model.getN_timeslots();k++)
 			numStudentTimeSlot.put(k, 0);
 		
 		for(int i=0; i<model.getExms().size(); i++) {
