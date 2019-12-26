@@ -221,7 +221,7 @@ public class TabuSearch {
         double currentPenalty;
         double newPenalty;
         double optPenalty;
-        avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)/2; // valore che mi serve per definire la dimensione della tabulist
+        avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)-1; // valore che mi serve per definire la dimensione della tabulist
         
         Integer[] optSolution = chrom;
         Integer[] bestSol;
@@ -238,12 +238,11 @@ public class TabuSearch {
 	            //	se la penalità tra la mia vecchia soluzione e quella nuova è migliorata di
 	            // almeno un millesimo della penalità della mia soluzione "più ottima", procedo ad esplorarla ancora
 	            // (valore da testare meglio, magari basta anche un centesimo)
-	            if((currentPenalty-newPenalty) > (optPenalty/100) ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
+	            if((currentPenalty-newPenalty) > (optPenalty/1000) && !isMinLocalYet(bestSol) ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
 	            	currentPenalty = newPenalty;
 	            	solution = bestSol.clone();
 	                //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + currentPenalty);
 	            	
-	                //minLoc.put(minLoc.size(), bestSol.clone());
             		
             		if(newPenalty<optPenalty) {
 	                	optSolution = bestSol.clone();
