@@ -98,11 +98,12 @@ public class TabuSearch {
         double penalty=0;
         
         for (int i=0; i<this.n_exams; i++){
-        	dist = Math.abs(chrom[exam]-chrom[i]);
-        		if(dist<=5)
-        			penalty += (Math.pow(2, 5-dist)*model.getnEe()[exam][i]);
-            
-        };
+        	if( exam != i) {
+	        	dist = Math.abs(chrom[exam]-chrom[i]);
+	        		if(dist<=5)
+	        			penalty += (Math.pow(2, 5-dist)*model.getnEe()[exam][i]);
+        	}
+        }
 
         return penalty/model.getStuds().size();
 	}
@@ -117,7 +118,7 @@ public class TabuSearch {
 
         Integer[] bestSol = chrom.clone();
         
-        for(int e =0; e<this.n_exams; e++) { //: getBadExams(chrom)) {// per ogni exam
+        for(int e = 0; e<this.n_exams; e++ ) {//: getBadExams(chrom)) {// per ogni exam
         	Integer[] newSol = chrom.clone();
         	actualPenalty = computePenaltyByExam(chrom,e); // calcolo peso-penalità dell'esame e
             
@@ -170,7 +171,7 @@ public class TabuSearch {
         return bestSol;
     }
     
-    /*
+    
     private List<Integer> getBadExams(Integer[] chrome ) {
 		List<Integer> idBadExams ;
 		HashMap<Integer,Double> sortExam = new HashMap<Integer, Double>();
@@ -193,17 +194,17 @@ public class TabuSearch {
 				if(!are_conflictual(i, e1, chrome))
 					notConflictual++;
 
-			sortExam.put(e1, (notConflictual/penalty));
+			sortExam.put(e1, (notConflictual*penalty));
 		}
 		
 		idBadExams = sortExam.entrySet().stream()
-	    .sorted(Map.Entry.comparingByValue(/*Comparator.reverseOrder()))
+	    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
 	    .map(Map.Entry::getKey)
 	    .collect(Collectors.toList());
 		
 		return idBadExams;
 	}
-    */
+    
     public boolean isMinLocalYet(Integer[] solution) {
     	for(Integer[] mL : minLoc)
     		if(Arrays.equals(mL, solution))
@@ -218,8 +219,8 @@ public class TabuSearch {
     	// minLoc = new HashMap<Integer, Integer[]>();
     	tabulist = new ArrayList<>();
         double currentPenalty;
-        double newPenalty = Integer.MAX_VALUE;
-        double optPenalty = newPenalty;
+        double newPenalty;
+        double optPenalty;
         avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)/2; // valore che mi serve per definire la dimensione della tabulist
         
         Integer[] optSolution = chrom;
@@ -227,17 +228,17 @@ public class TabuSearch {
         
         	 solution = chrom; // soluzione che gli passo dal crossover
         	 currentPenalty = model.computePenalty(solution); 
+        	 optPenalty = currentPenalty;
         	 // System.out.println("Penality:" + penalty);
 
 	        do{
 	            bestSol = generateNeigh(solution); // mi genero il vicinato
 	            newPenalty = model.computePenalty(bestSol);
 	            
-	            
 	            //	se la penalità tra la mia vecchia soluzione e quella nuova è migliorata di
 	            // almeno un millesimo della penalità della mia soluzione "più ottima", procedo ad esplorarla ancora
 	            // (valore da testare meglio, magari basta anche un centesimo)
-	            if((currentPenalty-newPenalty) > (optPenalty/1000) ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
+	            if((currentPenalty-newPenalty) > (optPenalty/100) ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
 	            	currentPenalty = newPenalty;
 	            	solution = bestSol.clone();
 	                //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + currentPenalty);

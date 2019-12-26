@@ -135,7 +135,7 @@ public class GeneticAlgorithm {
 	 */
 	private void doRecursive(Integer[] chrom,int step, int exam_id, int numExamsNotAssignedYet) {
 		
-		if(numExamsNotAssignedYet > 0) { // finchè non termino gli esami da schedulare
+		if(numExamsNotAssignedYet > 0 && exam_id>-1) { // finchè non termino gli esami da schedulare
 			if(chrom[exam_id]!=null) { // se l'esame ha già assegnato un suo timeslot
 				doRecursive(chrom, step+1, sortedExmToSchedule.get(step+1), numExamsNotAssignedYet);
 				
@@ -144,7 +144,7 @@ public class GeneticAlgorithm {
 					return;
 				}
 			} else {
-				for(int i : getBestPath(chrom)) { //timeslot
+				for(int i : getBestPath(chrom,exam_id)) { //timeslot
 					if(!found) {
 						if(!are_conflictual(i, exam_id, chrom)) {
 							chrom[exam_id] = i;
@@ -252,7 +252,7 @@ public class GeneticAlgorithm {
 	 * @param chrom
 	 * @return list of sorted timeslot by the number of students enrolled in the exam assigned yet
 	 */
-	public List<Integer> getBestPath(Integer[] chrom) {
+	public List<Integer> getBestPath(Integer[] chrom, int exam) {
 		List<Integer> path;
 		HashMap<Integer,Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 		
@@ -265,6 +265,24 @@ public class GeneticAlgorithm {
 				numStudentTimeSlot.replace(chrom[i], numStud);
 			}
 		} 
+		
+		/*int dist;
+        int penalty;
+        
+        for(int t = 1; t<=this.n_time_slots; t++) {
+        	chrom[exam] = t;
+        	penalty=0;
+        	
+	        for (int i=0; i<this.n_exams; i++){
+	        	if(chrom[i]!=null && exam!=i) {
+	        		dist = Math.abs(chrom[exam]-chrom[i]);
+	        		if(dist<=5)
+	        			penalty += (Math.pow(2, 5-dist)*model.getnEe()[exam][i]);
+	        	}
+	        }
+	        
+	        numStudentTimeSlot.replace(t, penalty);
+        } */
 		
 		path =  numStudentTimeSlot.entrySet().stream()
 			    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -412,7 +430,7 @@ public class GeneticAlgorithm {
 		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
 				  /Arrays.stream(this.fitness).max().getAsDouble());
 		  
-		  if(rapp>0.5) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
+		  if(rapp>0.6) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
 			  
 			  //if(getChromFitness(childs[0]) > getChromFitness(population[indParent1]))
 			  population[indParent1] = ts.run(childs[0]).clone();
