@@ -38,11 +38,11 @@ public class GeneticAlgorithm {
 		this.population = new Integer[n_chrom][n_exams];	
 		this.fitness = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
-		this.n_exams = model.getExms().size();
-		this.n_students = model.getStuds().size();
-		this.population = new Integer[n_chrom][n_exams];	
-		this.fitness = new double[n_chrom];
-		this.n_time_slots = model.getN_timeslots();
+		
+		
+		
+		
+		
 		this.rand  = new Random();
 		this.ts = new TabuSearch(this.model);
 		this.bestBenchmark = Double.MIN_VALUE;
@@ -68,12 +68,12 @@ public class GeneticAlgorithm {
 		
 		// crossover fino a scadenza dei 180/300 secondi
 		while(true) {
-			//System.out.print("\n"+ i++ +"th Iteration - Time: "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
+			System.out.print("\n"+ i++ +"th Iteration - Time: "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
 			
 			this.crossover();
 			this.fitness();
-			//this.print_population();
-			//this.print_banchmark();
+			// this.print_population();
+			// this.print_banchmark();
 			
 
 		  if((System.currentTimeMillis()-model.timeStart) > (180*1000)) { // termino il programma dopo 300s 
@@ -377,7 +377,7 @@ public class GeneticAlgorithm {
 				  bestSolution = population[i].clone();*/
 				  
 		
-		// System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
+		 System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
 		
 		
 		int indParent1 = 0, indParent2 = 0;
@@ -391,7 +391,7 @@ public class GeneticAlgorithm {
 				  indParent1 = i;
 				}
 		  }
-		  parents[0] = population[indParent1].clone();
+		  parents[0] = population[rand.nextInt(n_chrom)].clone();
 		  
 		  for(int i=0;i<this.n_chrom;i++){
 			  if(fitness[i] < minValueP2 && indParent1!=i && !Arrays.equals(parents[0],population[i]) ){
@@ -399,7 +399,7 @@ public class GeneticAlgorithm {
 				  indParent2 = i;
 				}
 		  }
-		  parents[1] = population[indParent2].clone(); 
+		  parents[1] = population[rand.nextInt(n_chrom)].clone(); 
 		  
 		  // Calculate a random crossing section
 		  int crossingSecStart = rand.nextInt(n_exams);
@@ -448,17 +448,14 @@ public class GeneticAlgorithm {
 		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
 				  /Arrays.stream(this.fitness).max().getAsDouble());
 		  
-		  if(rapp>0.75) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
-			  
-			  //if(getChromFitness(childs[0]) > getChromFitness(population[indParent1]))
-			  population[indParent1] = ts.run(childs[0]).clone();
+		  if(rapp>0.95) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
+			  System.out.print("\nTS");
+			  childs[0] = ts.run(childs[0]).clone();
+			  childs[1] = ts.run(childs[1]).clone();
+		  } 
 		  
-			  // if(getChromFitness(childs[1]) > getChromFitness(population[indParent2]))
-			  population[indParent2] = ts.run(childs[1]).clone();
-		  } else {
-			  population[indParent1] = childs[0].clone();
-			  population[indParent2] = childs[1].clone();
-		  }
+		  population[indParent1] = childs[0].clone();
+		  population[indParent2] = childs[1].clone();
 		  
 	}
 	
