@@ -10,14 +10,13 @@ import java.util.stream.*;
 
 public class TabuSearch {
     private ArrayList<TLelement> tabulist;
-    private Integer[] solution;
     private List<Integer> srtExms = new ArrayList<>();
     private Model model;
     private int n_exams;
 	private int n_timeslots;
 	private List<Integer[]> minLoc;
 	private int avgTimeSlotNotConflictual;
-	private double theBestPenalty = 0;
+	private double theBestPenalty = Double.MAX_VALUE;
 
     public TabuSearch(Model model) {
         this.model = model;
@@ -111,12 +110,14 @@ public class TabuSearch {
 
 	// genero il vicinato
     public Integer[] generateNeigh(Integer[] chrom){
-        double bestPenalty=Integer.MIN_VALUE;
+        double bestPenalty=0;
         double newPenalty;
         double actualPenalty;
         TLelement tl = new TLelement(-1, -1); // inizializzo elemento della tabù list;
 
         Integer[] bestSol = chrom.clone();
+        double chromPenalty = model.computePenalty(chrom);
+        Integer[] subSol = chrom;
         
         for(int e = 0; e<this.n_exams; e++ ) {//: getBadExams(chrom)) {// per ogni exam
         	Integer[] newSol = chrom.clone();
@@ -132,18 +133,24 @@ public class TabuSearch {
                     if ((actualPenalty - newPenalty) > bestPenalty ) { 
                     	// controllo se è una mossa tabu o se anche tabu, mi genera una soluzione migliore di tutte
                     	// quelle trovate in precedenza
-                        if (!tabulist.contains(new TLelement(e, i)) || (tabulist.contains(new TLelement(e, i)) 
-                        		&& (actualPenalty - newPenalty) >= theBestPenalty)) { 
+                    	double penalty = model.computePenalty(newSol);
+                        if (!tabulist.contains(new TLelement(e, i)) 
+                        		|| (tabulist.contains(new TLelement(e, i)) && penalty <= theBestPenalty)) { 
                             
                         	tl = new TLelement(e, i);
                             bestPenalty = (actualPenalty - newPenalty);
                             bestSol = newSol.clone();
                             
-                            if(bestPenalty > theBestPenalty) {
-                            	theBestPenalty = bestPenalty;
+                            if(penalty < theBestPenalty) {
+                            	theBestPenalty = penalty;
                             	 // System.out.print("\n"+theBestPenalty);
                             }
                             
+                        }
+                        
+                        if(tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
+                        	chromPenalty = penalty;
+                        	subSol = newSol.clone();
                         }
                     }
                 }
@@ -156,6 +163,8 @@ public class TabuSearch {
         // variazione di penalità migliore, salvo la mossa
         if(tl.getE() > -1 )
         	tabulist.add(tl);
+        else
+        	bestSol = subSol;
         
         // se la tabulist ha una dimensione superiore al numero di esami per la media di timeslot per esami, 
         // elimino la mossa più vecchia. Se ho capito bene, la tabulist mi serve per andare ad esplorare soluzioni
@@ -216,65 +225,69 @@ public class TabuSearch {
     
     // metodo che richiamo nel crossover
     public Integer[] run(Integer[] chrom) {
-    	// minLoc = new HashMap<Integer, Integer[]>();
     	tabulist = new ArrayList<>();
         double currentPenalty;
         double newPenalty;
         double optPenalty;
-        avgTimeSlotNotConflictual = 1; // valore che mi serve per definire la dimensione della tabulist
+        avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom); // valore che mi serve per definire la dimensione della tabulist
         
         Integer[] optSolution = chrom;
-        Integer[] bestSol;
+        Integer[] newSolution;
+        Integer[] currentSolution;
         
-        	 solution = chrom; // soluzione che gli passo dal crossover
-        	 currentPenalty = model.computePenalty(solution); 
-        	 optPenalty = currentPenalty;
-        	 // System.out.println("Penality:" + penalty);
+    	currentSolution = chrom; // soluzione che gli passo dal crossover
+    	currentPenalty = model.computePenalty(currentSolution); 
+    	optPenalty = currentPenalty;
+    	// System.out.println("Penality:" + penalty);
 
-	        do{
-	            bestSol = generateNeigh(solution); // mi genero il vicinato
-	            newPenalty = model.computePenalty(bestSol);
-	            
-	            //	se la penalità tra la mia vecchia soluzione e quella nuova è migliorata di
-	            // almeno un millesimo della penalità della mia soluzione "più ottima", procedo ad esplorarla ancora
-	            // (valore da testare meglio, magari basta anche un centesimo)
-	            if((currentPenalty-newPenalty) > 0*(optPenalty/1000) ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
-	            	currentPenalty = newPenalty;
-	            	solution = bestSol.clone();
-	                //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + currentPenalty);
-	            	
-            		
-            		if(newPenalty<optPenalty) {
-	                	optSolution = bestSol.clone();
-	                	optPenalty = currentPenalty;
-	                } 
-	                
-	            } else { // se invece la mia nuova soluzione non è migliorata, la considero un minimo locale
-	            	
-	            	if(!isMinLocalYet(bestSol)) { // se non l'ho già inserito nella lista dei minimi
-	            		// System.out.println("Min inserted!");
-	            		minLoc.add( bestSol.clone());
-		            	solution = bestSol.clone(); // non esco comunque dal tabusearch perchè voglio provare ancora una volta se mi porta ad una soluzione migliore
-		            	//currentPenalty = newPenalty;
-	            		
-	            		if(newPenalty<optPenalty) {
-		                	optSolution = bestSol.clone();
-		                	optPenalty = newPenalty;
-		                }
-	            	} else { // se invece è già presente, esco dal tabusearch e restituisco la soluzione migliore che ho trovato
-	            		
-	            		break;
-	            	}
-	            		// System.out.println("Min already present!");
-	                
-		            	// System.out.println("Minimo locale: " + minLoc.toString());
-		                // System.out.println();
-	            }
-	        }while(true);
-	        // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
+        do{
+            newSolution = generateNeigh(currentSolution); // mi genero il vicinato
+            newPenalty = model.computePenalty(newSolution);
             
+            //	se la penalità tra la mia vecchia soluzione e quella nuova è migliorata di
+            // almeno un millesimo della penalità della mia soluzione "più ottima", procedo ad esplorarla ancora
+            // (valore da testare meglio, magari basta anche un centesimo)
+            
+            if((currentPenalty-newPenalty) > 0 ) {//!Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
+            	currentPenalty = newPenalty;
+            	currentSolution = newSolution.clone();
+                //System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + currentPenalty);
+            	
+        		
+        		if(newPenalty<optPenalty) {
+                	optSolution = newSolution.clone();
+                	optPenalty = currentPenalty;
+                } 
+                
+            } else if(!isMinLocalYet(newSolution)) { //se invece la mia nuova soluzione non è migliorata, la considero un minimo locale, se non l'ho già inserito nella lista dei minimi
+        		// System.out.println("Min inserted!");
+            	 currentSolution = newSolution.clone(); // non esco comunque dal tabusearch perchè voglio provare ancora una volta se mi porta ad una soluzione migliore
+            	//currentPenalty = newPenalty;
+        		
+        		if(newPenalty<=optPenalty) {
+        			minLoc.add( newSolution.clone());
+                	optSolution = newSolution.clone();
+                	optPenalty = newPenalty;
+                } 
+        		
+        	} else {
+        		
+        		if(newPenalty<=optPenalty) 
+                	optSolution = newSolution.clone();
+        		
+        		// se invece è già presente, esco dal tabusearch e restituisco la soluzione migliore che ho trovato
+	            break;
+        	
+        		// System.out.println("Min already present!");
+            
+            	// System.out.println("Minimo locale: " + minLoc.toString());
+                // System.out.println();
+            }
+        }while(true);
+        // System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith penalty: " + penalty);
+        
 
-	        return  optSolution;
+        return  optSolution;
     }
     
     

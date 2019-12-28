@@ -73,10 +73,10 @@ public class GeneticAlgorithm {
 			this.crossover();
 			this.fitness();
 			// this.print_population();
-			// this.print_banchmark();
+			 this.print_banchmark();
 			
 
-		  if((System.currentTimeMillis()-model.timeStart) > (180*1000)) { // termino il programma dopo 300s 
+		  if((System.currentTimeMillis()-model.timeStart) > (300*1000)) { // termino il programma dopo 300s 
 			  System.out.print("\nBest Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
 
 			this.print_population();
@@ -136,6 +136,7 @@ public class GeneticAlgorithm {
 				
 				
 				} while(!isFeasible(chromosome) || existYet(chromosome));
+				
 				
 				population[c] = chromosome.clone();
 			}
@@ -335,8 +336,8 @@ public class GeneticAlgorithm {
 				}
 				
 			}	
-			penalty = penalty / this.n_students;
-			this.fitness[c] =  1 / penalty;	
+			//penalty = penalty / this.n_students;
+			this.fitness[c] =  this.n_students / penalty;	
 		}			
 	}
 	
@@ -357,11 +358,11 @@ public class GeneticAlgorithm {
 							penalty += ( Math.pow(2, 5-distance) * this.nEe[e1][e2]);
 						}
 					}
-					
-				penalty = penalty / this.n_students;
 			}	
+			
+			penalty = this.n_students / penalty ;
 
-			return  (1 / penalty);	
+			return  penalty;	
 		}
 		
 
@@ -431,10 +432,11 @@ public class GeneticAlgorithm {
 				  // se la mia ricorsione è fallita ed è uscita dal ciclo, provo a modificare l'ordine di due esami
 				  Collections.swap(sortedExmToSchedule, 0, k++); 
 				  
-				  if(k > this.n_exams) // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo un'altra
+				  if(k > this.n_exams) { // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo un'altra
+					  System.out.println("Failed");
 					  return;
-			  
-			  } while(!isFeasible(chromosome) || existYet(chromosome)) ;
+				  }
+			  } while(!isFeasible(chromosome) || existYet(chromosome) || ts.isMinLocalYet(chromosome)) ;
 			
 			  childs[i] = chromosome.clone();
 			  
@@ -448,15 +450,28 @@ public class GeneticAlgorithm {
 		  double rapp =  (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
 				  /Arrays.stream(this.fitness).max().getAsDouble());
 		  
-		  if(rapp>0.95) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
-			  System.out.print("\nTS");
+		  //if(rapp>0.75) { // se è prossimo ad 1, eseguo tabusearch (vanno testati altri valori)
 			  childs[0] = ts.run(childs[0]).clone();
 			  childs[1] = ts.run(childs[1]).clone();
-		  } 
+		  //} else  System.out.println("TS");
 		  
-		  population[indParent1] = childs[0].clone();
-		  population[indParent2] = childs[1].clone();
+		if(getChromFitness(childs[0]) > getChromFitness(childs[1])) {
+			
+			if(getChromFitness(childs[0]) > fitness[indParent1]) 
+				population[indParent1] = childs[0].clone();
 		  
+			if(getChromFitness(childs[1]) > fitness[indParent2]) 
+			  population[indParent2] = childs[1].clone();
+			
+		} else {
+			
+			if(getChromFitness(childs[1]) > fitness[indParent1]) 
+				population[indParent1] = childs[0].clone();
+		  
+			if(getChromFitness(childs[0]) > fitness[indParent2]) 
+			  population[indParent2] = childs[1].clone();
+		}
+			
 	}
 	
 	private boolean isFeasible(Integer[] chrom) {
