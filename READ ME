@@ -16,7 +16,7 @@ Parallel computing con un tread che scrive semplicemente le soluzioni su file
 ******Cose già fatte******
 
 Ogni tanto(?) è applicato un tabù search ai figli generati con il GA
-La funzione recorsiva ogni tanto non parte proprio (?)
+La funzione recorsiva non parte se (?)
 
 
 ******Perché succede*******
