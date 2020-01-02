@@ -108,29 +108,28 @@ public class GeneticAlgorithm {
 			
 			for(int c=0; c<n_chrom; c++) {
 				find = false;
-				int exam_id = rand.nextInt(this.n_exams-1);
-				chromosome = new Integer[this.n_time_slots];
+				int exam_id = rand.nextInt(this.n_exams);
+				chromosome = new Integer[this.n_exams];
 				
-				recursive(population[c],exam_id, c, this.n_exams);
+				recursive(population[c],exam_id, this.n_exams);
 				population[c] = chromosome.clone();
 			}
 			
 		}
 		
-	private void recursive(Integer[] chrom, int exam_id, int indChrom, int numExamsNotAssignedYet) {
+	private void recursive(Integer[] chrom, int exam_id, int numExamsNotAssignedYet) {
 		
 		if(exam_id == this.n_exams)
 			exam_id = 0;
 		
 		if(numExamsNotAssignedYet > 0) {
+			// Try to assign every time-slot at this exam
 			for(int i =0; i< this.n_time_slots; i++) {
 				if(!are_conflictual(i, exam_id, chrom)) {
 					if(!find) {
 						chrom[exam_id] = i;
-						recursive(chrom, exam_id+1, indChrom, numExamsNotAssignedYet-1);
+						recursive(chrom, exam_id+1, numExamsNotAssignedYet-1);
 						chrom[exam_id] = null;
-						
-						//i =rand.nextInt(n_time_slots-1);
 					} else break;
 				}
 			}
@@ -225,35 +224,8 @@ public class GeneticAlgorithm {
 			  find = false;
 			  chromosome = new Integer[this.n_time_slots];
 			  
-			  recursive(childs[i],position, i, numExamsNotAssignedYet);
-			  childs[i] = chromosome.clone();
-
-		  
-			 /* do {
-				  
-				  int randTime = rand.nextInt(n_time_slots);
-				 /* if(!are_conflictual(parents[i][indValue], position, childs[i])) {
-					  childs[i][position] = parents[i][indValue];
-					  
-					  position++;
-					  count = 0;
-				  } else if (count>=this.n_exams) {
-					  if(!are_conflictual(randTime, position, childs[i])) {
-						  childs[i][position] = randTime;
-					  
-						  position++;
-					  }
-				  // }
-				  
-				  indValue++;
-				  
-				  if(position == n_exams) 
-					  position = 0;
-				  
-				  if(indValue == n_exams) 
-					  indValue = 0;
-				  
-			  } while(position != crossingSecStart ); */
+			  recursive(childs[i],position, numExamsNotAssignedYet);
+			  childs[i] = chromosome.clone();		  
 		  }
 		  
 		  if(isFeasible(childs[0])) 

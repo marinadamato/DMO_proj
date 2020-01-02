@@ -100,15 +100,10 @@ public class Model {
             File file_stud = new File(file);
             BufferedReader br_stu = new BufferedReader(new FileReader(file_stud));
             while ((st = br_stu.readLine()) != null) {
-                //System.out.println(st);
             	if(st.length()>0){
 	                String[] parts = st.split(" ");
 	                if(parts.length != 2) throw new IOException();
 	                if(!isNumeric(parts[1]) || isNumeric(parts[0])) throw new IOException();
-	                //else {
-	                //System.out.println(parts[0]);
-	                //System.out.println(parts[1]);
-	                //}
 	                String idS = parts[0];
 	                int idE = Integer.parseInt(parts[1]);
 	                if(!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
@@ -143,12 +138,6 @@ public class Model {
                 }
             }
         }
-        
-        for (Integer[] row : nEe)
-            // converting each row as string
-            // and then printing in a separate line
-            System.out.println(Arrays.toString(row));
-
         return nEe;
     }
 
