@@ -10,7 +10,7 @@ public class Timetabling {
 		model.loadStu("Instances/instance01.stu");
 		model.buildNeEMatrix();
 
-		GeneticAlgorithm ga = new GeneticAlgorithm(model, 12); // quanti cromosomi sarebbe meglio utilizzare?? 
+		GeneticAlgorithm ga = new GeneticAlgorithm(model, 12); // quanti cromosomi sarebbe meglio utilizzare??
 		ga.fit_predict();
 	}
 }
