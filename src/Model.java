@@ -207,7 +207,7 @@ public class Model {
     		file.createNewFile();
     		FileWriter myWriter = new FileWriter(file, false);
     		for (int i=0; i<sol.length; i++) {
-    			myWriter.write(i+1+" "+sol[i]+"\n");
+    			myWriter.write(exms.get(i).getID()+" "+sol[i]+"\n");
     		}
     		myWriter.close();
     	}catch(IOException e) {
