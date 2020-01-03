@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -198,6 +199,21 @@ public class Model {
     
     public int[] getLineFromMatrix(int i) {
     	return this.nEe[i];
+    }
+    
+    public void writeFile(Integer[] sol) {
+    	try {
+    		File file = new File("Instances/instance01_DMOgroup16.sol");
+    		file.createNewFile();
+    		FileWriter myWriter = new FileWriter(file, false);
+    		for (int i=0; i<sol.length; i++) {
+    			myWriter.write(i+1+" "+sol[i]+"\n");
+    		}
+    		myWriter.close();
+    	}catch(IOException e) {
+    		System.out.println("An error occurred");
+    		e.printStackTrace();
+    	}
     }
 
 }

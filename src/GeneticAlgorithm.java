@@ -374,13 +374,13 @@ public class GeneticAlgorithm {
 		if(Arrays.stream(fitness).filter(c -> c>0).max().getAsDouble() > bestBenchmark)
 			bestBenchmark = Arrays.stream(fitness).filter(c -> c>0).max().getAsDouble();
 		
-		/*for(int i=0; i<this.n_chrom; i++)
+		for(int i=0; i<this.n_chrom; i++)
 			  if(getChromFitness(population[i])>=bestBenchmark) 
-				  bestSolution = population[i].clone();*/
+				  bestSolution = population[i].clone();
 				  
 		
-		 System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
-		
+		System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution: "+Arrays.toString(bestSolution)+*/"\n");
+		model.writeFile(bestSolution);
 		
 		int indParent1 = 0, indParent2 = 0;
 		double minValueP1 = Double.MAX_VALUE, minValueP2 = Double.MAX_VALUE;
