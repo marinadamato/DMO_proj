@@ -17,7 +17,7 @@ public class GeneticAlgorithm {
 	private int n_students;
 	private int n_time_slots;
 	private int[][] nEe;
-	private double[] fitness;
+	private double[] benchmark;
 	private Random rand;
 	private boolean found;
 	private Integer[] chromosome;
@@ -26,7 +26,6 @@ public class GeneticAlgorithm {
 	private List<Integer> sortedExmToSchedule;
 	private TabuSearch ts;
 	private double bestBenchmark;
-	private Integer[] bestSolution;
 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -36,11 +35,11 @@ public class GeneticAlgorithm {
 		this.n_students = model.getStuds().size();
 		this.nEe = model.getnEe();
 		this.population = new Integer[n_chrom][n_exams];
-		this.fitness = new double[n_chrom];
+		this.benchmark = new double[n_chrom];
 		this.n_time_slots = model.getN_timeslots();
 		this.rand = new Random();
 		this.ts = new TabuSearch(this.model);
-		this.bestBenchmark = Double.MIN_VALUE;
+		this.bestBenchmark = Double.MAX_VALUE;
 	}
 
 	public boolean existYet(Integer[] chrom) {
@@ -55,7 +54,7 @@ public class GeneticAlgorithm {
 	public void fit_predict() {
 		this.initial_population_RANDOM();
 		// this.print_population();
-		this.fitness();
+		this.benchmark();
 		// this.print_banchmark();
 		int i = 0;
 
@@ -65,12 +64,12 @@ public class GeneticAlgorithm {
 			// "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
 
 			this.crossover();
-			this.fitness();
+			this.benchmark();
 			// this.print_population();
 			// this.print_banchmark();
 
 			if ((System.currentTimeMillis() - model.timeStart) > (180 * 1000)) { // termino il programma dopo 300s
-				System.out.print("\nBest Bench: " + 1 / bestBenchmark
+				System.out.print("\nBest Bench: " + bestBenchmark
 						+ /* "\nBest Solution: "+Arrays.toString(bestSolution)+ */"\n");
 
 				this.print_population();
@@ -228,7 +227,7 @@ public class GeneticAlgorithm {
 	/**
 	 * This method computes fitness for each chromosomes
 	 */
-	private void fitness() {
+	private void benchmark() {
 		double penalty;
 		int distance;
 
@@ -245,8 +244,7 @@ public class GeneticAlgorithm {
 				}
 
 			}
-			// penalty = penalty / this.n_students;
-			this.fitness[c] = this.n_students / penalty;
+			this.benchmark[c] = penalty / this.n_students;
 		}
 	}
 
@@ -256,7 +254,7 @@ public class GeneticAlgorithm {
 	 * @param chrom
 	 * @return
 	 */
-	private double getChromFitness(Integer[] chrom) {
+	private double getChromBenchmark(Integer[] chrom) {
 		double penalty = 0;
 		int distance = 0;
 
@@ -269,7 +267,7 @@ public class GeneticAlgorithm {
 			}
 		}
 
-		penalty = this.n_students / penalty;
+		penalty = penalty/this.n_students ;
 
 		return penalty;
 	}
@@ -279,20 +277,20 @@ public class GeneticAlgorithm {
 		// "+Arrays.toString(bestSolution)+*/"\n");
 
 		int indParent1 = 0, indParent2 = 0;
-		double minValueP1 = Double.MAX_VALUE, minValueP2 = Double.MAX_VALUE;
+		double maxValueP1 = Double.MIN_VALUE, maxValueP2 = Double.MIN_VALUE;
 		Integer[][] parents = new Integer[2][n_exams];
 
 		// Search the two worst fitness in my population
 		for (int i = 0; i < this.n_chrom; i++) {
-			if (fitness[i] < minValueP1) {
-				minValueP1 = fitness[i];
+			if (benchmark[i] > maxValueP1) {
+				maxValueP1 = benchmark[i];
 				indParent1 = i;
 			}
 		}
 
 		for (int i = 0; i < this.n_chrom; i++) {
-			if (fitness[i] < minValueP2 /* && indParent1!=i */ ) {
-				minValueP2 = fitness[i];
+			if (benchmark[i] > maxValueP2 && indParent1!=i  ) {
+				maxValueP2 = benchmark[i];
 				indParent2 = i;
 			}
 		}
@@ -315,7 +313,6 @@ public class GeneticAlgorithm {
 
 		// Order Crossover modified
 		for (int i = 0; i < 2; i++) {
-			// getSortedExmToScheduleByNumStudent();
 			int k = 0; // contatore di ricorsioni fallite
 
 			do {
@@ -334,8 +331,7 @@ public class GeneticAlgorithm {
 
 				if (k > this.n_exams) { // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo
 										// un'altra
-					System.out
-							.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000 + " s - Failed");
+					System.out.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000 + " s - Failed");
 					getSortedExmToScheduleByNumStudent();
 					return;
 				}
@@ -348,36 +344,38 @@ public class GeneticAlgorithm {
 		childs[0] = ts.run(childs[0]).clone();
 		childs[1] = ts.run(childs[1]).clone();
 
-		if (getChromFitness(childs[0]) < getChromFitness(childs[1])) {
+		if (getChromBenchmark(childs[0]) > getChromBenchmark(childs[1])) {
 
-			if (getChromFitness(childs[0]) > fitness[indParent1])
+			if (getChromBenchmark(childs[0]) < benchmark[indParent1])
 				population[indParent1] = childs[0].clone();
 
-			if (getChromFitness(childs[1]) > fitness[indParent2])
+			if (getChromBenchmark(childs[1]) < benchmark[indParent2])
 				population[indParent2] = childs[1].clone();
 
 		} else {
 
-			if (getChromFitness(childs[1]) > fitness[indParent1])
+			if (getChromBenchmark(childs[1]) < benchmark[indParent1])
 				population[indParent1] = childs[1].clone();
 
-			if (getChromFitness(childs[0]) > fitness[indParent2])
+			if (getChromBenchmark(childs[0]) < benchmark[indParent2])
 				population[indParent2] = childs[0].clone();
 		}
 
-		this.fitness();
+		this.benchmark();
 
 		// rapporto tra la fitness media e la fitness massima
-		double ratio = (Arrays.stream(this.fitness).average().getAsDouble() // da teoria libro
-				/ Arrays.stream(this.fitness).max().getAsDouble());
+		double ratio = (Arrays.stream(this.benchmark).min().getAsDouble())
+				/Arrays.stream(this.benchmark).average().getAsDouble(); // da teoria libro
 
 		// mi segno il miglior benchmark trovato
-		if (Arrays.stream(this.fitness).max().getAsDouble() > bestBenchmark) {
-			bestBenchmark = Arrays.stream(this.fitness).max().getAsDouble();
+		if (Arrays.stream(this.benchmark).min().getAsDouble() < bestBenchmark) {
+			bestBenchmark = Arrays.stream(this.benchmark).min().getAsDouble();
+			
 			System.out.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
-					+ " s - New best benchmark : " + 1 / bestBenchmark + " - Ratio: " + ratio + "\n");
+					+ " s - New best benchmark : " + bestBenchmark + " - Ratio: " + ratio + "\n");
+			
 			for(Integer[] c : population)
-				if(getChromFitness(c)>=bestBenchmark) {
+				if(getChromBenchmark(c)<=bestBenchmark) {
 					model.writeFdile(c);
 					return;
 				}
@@ -407,12 +405,12 @@ public class GeneticAlgorithm {
 
 	private List<Integer> getIndexBadChroms() {
 		List<Integer> idx;
-		HashMap<Integer, Double> fitness = new HashMap<Integer, Double>();
+		HashMap<Integer, Double> benchs = new HashMap<Integer, Double>();
 
 		for (int k = 0; k < this.n_chrom; k++)
-			fitness.put(k, this.fitness[k]);
+			benchs.put(k, this.benchmark[k]);
 
-		idx = fitness.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey)
+		idx = benchs.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey)
 				.collect(Collectors.toList());
 
 		for (int k = 0; k < this.n_chrom / 2; k++)
@@ -439,40 +437,17 @@ public class GeneticAlgorithm {
 		}
 	}
 
-	private void print_fitness() {
-
-		System.out.println("Fitness: ");
-		for (int i = 0; i < n_chrom; i++) {
-			System.out.println("Fitness" + (i + 1) + ": " + 1 / fitness[i]);
-		}
-	}
-
 	private void print_banchmark() {
 
 		System.out.println("Banchmark: ");
-		for (int i = 0; i < n_chrom; i++) {
-			System.out.println("Banchmark" + (i + 1) + ": " + model.computePenalty(population[i]));
+		int i = 0;
+		for (Double b : benchmark) {
+			System.out.println("Banchmark" + (i++) + ": " + b);
 		}
 	}
 
 	public Integer[][] getPopulation() {
 		return population;
-	}
-
-	public int getN_chrom() {
-		return n_chrom;
-	}
-
-	public int getN_exams() {
-		return n_exams;
-	}
-
-	public int getN_students() {
-		return n_students;
-	}
-
-	public double[] getFitness() {
-		return fitness;
 	}
 
 }
