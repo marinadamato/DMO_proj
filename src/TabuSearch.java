@@ -16,6 +16,7 @@ public class TabuSearch {
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
 		this.minLoc = new ArrayList<Integer[]>();
+		tabulist = new ArrayList<>();
 	}
 
 	private boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {
@@ -135,11 +136,11 @@ public class TabuSearch {
 
 	// metodo che richiamo nel crossover
 	public Integer[] run(Integer[] chrom) {
-		tabulist = new ArrayList<>();
+		// tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
 		double optPenalty;
-		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom); // valore che mi serve per definire la
+		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)-1; // valore che mi serve per definire la
 																			// dimensione della tabulist
 
 		Integer[] optSolution = chrom;
