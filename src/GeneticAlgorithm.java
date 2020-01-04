@@ -29,8 +29,9 @@ public class GeneticAlgorithm {
 	private int counter_iteration;
 	private long lastBenchFound;
 	private List<TLelement> tabulist;
+	private int tlim;
 
-	public GeneticAlgorithm(Model model, int n_chrom) {
+	public GeneticAlgorithm(Model model, int n_chrom,int tlim) {
 		super();
 		this.model = model;
 		this.n_chrom = n_chrom;
@@ -44,6 +45,7 @@ public class GeneticAlgorithm {
 		this.ts = new TabuSearch(this.model);
 		this.bestBenchmark = Double.MAX_VALUE;
 		this.tabulist = new ArrayList<TLelement>();
+		this.tlim=tlim;
 	}
 
 	public boolean existYet(Integer[] chrom) {
@@ -71,7 +73,7 @@ public class GeneticAlgorithm {
 			// this.print_population();
 			// this.print_banchmark();
 
-			if ((System.currentTimeMillis() - model.timeStart) > (180 * 1000)) { // termino il programma dopo 300s
+			if ((System.currentTimeMillis() - model.timeStart) > (this.tlim * 1000)) { // termino il programma dopo 300s
 				System.out.print("\nBest Bench: " + bestBenchmark
 						+ /* "\nBest Solution: "+Arrays.toString(bestSolution)+ */"\n");
 

@@ -3,14 +3,16 @@ import java.io.*;
 public class Timetabling {
 
 	public static void main(String[] args) throws Exception, IOException {
+		//ricordarsi di implementare la scirttura da terminale 
+		//java -jar ETPsolverDMOgroupXX.jar instancename -t tlim
+		int tlim=180;
+		String instance="instance07";
+		
 		Model model = new Model();
-		// Upstream, based on origin/GeneticAlgorithm
-		model.loadSlo("Instances/instance01.slo");
-		model.loadExm("Instances/instance01.exm");
-		model.loadStu("Instances/instance01.stu");
-		model.buildNeEMatrix();
+		
+		model.loadIstance("Instances/"+instance);
 
-		GeneticAlgorithm ga = new GeneticAlgorithm(model, 12); // quanti cromosomi sarebbe meglio utilizzare??
+		GeneticAlgorithm ga = new GeneticAlgorithm(model, 12,tlim); // quanti cromosomi sarebbe meglio utilizzare??
 		ga.fit_predict();
 	}
 }

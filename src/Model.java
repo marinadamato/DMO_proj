@@ -13,6 +13,7 @@ public class Model {
 	private HashMap<Integer, Exam> exms;
 	private HashSet<String> studs;
 	long timeStart;
+	private String path;
 
 	public Model() {
 		super();
@@ -37,7 +38,15 @@ public class Model {
 		return this.studs;
 	}
 
-	public boolean loadSlo(String file) {
+	public void loadIstance(String path) {
+		this.path=path;
+		this.loadSlo(path+".slo");
+		this.loadExm(path+".exm");
+		this.loadStu(path+".stu");
+		this.buildNeEMatrix();
+	}
+	
+	private boolean loadSlo(String file) {
 		String st;
 		try {
 			File file_time = new File(file);
@@ -55,7 +64,7 @@ public class Model {
 		}
 	}
 
-	public boolean loadExm(String file) {
+	private boolean loadExm(String file) {
 		String st;
 		int id = 0;
 		try {
@@ -82,7 +91,7 @@ public class Model {
 		}
 	}
 
-	public boolean loadStu(String file) {
+	private boolean loadStu(String file) {
 		String st;
 		try {
 
@@ -110,7 +119,7 @@ public class Model {
 		}
 	}
 
-	public int[][] buildNeEMatrix() {
+		private int[][] buildNeEMatrix() {
 
 		this.nEe = new int[exms.size()][exms.size()];
 		ArrayList<String> eList, EList;
@@ -156,7 +165,7 @@ public class Model {
 
 	public void writeFdile(Integer[] sol) {
 		try {
-			File file = new File("Instances/instance01_DMOgroup16.sol");
+			File file = new File(this.path+"_DMOgroup16.sol");
 			file.createNewFile();
 			FileWriter myWriter = new FileWriter(file, false);
 			for (int i = 0; i < sol.length; i++) {
