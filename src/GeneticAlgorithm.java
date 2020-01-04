@@ -406,7 +406,7 @@ public class GeneticAlgorithm {
 				}
 		}
 
-		if (ratio > 0.95 && (System.currentTimeMillis() - lastBenchFound) > (30 * 1000)) {// da teoria libro
+		if (ratio > 0.95 && (System.currentTimeMillis() - lastBenchFound) > (45 * 1000)) {// da teoria libro
 			for (int c : getIndexBadChroms()) {
 
 				do {

@@ -9,14 +9,13 @@ public class TabuSearch {
 	private int n_timeslots;
 	private List<Integer[]> minLoc;
 	private int avgTimeSlotNotConflictual;
-	private double theBestPenalty = Double.MAX_VALUE;
+	private double optPenalty = Double.MAX_VALUE;
 
 	public TabuSearch(Model model) {
 		this.model = model;
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
 		this.minLoc = new ArrayList<Integer[]>();
-		tabulist = new ArrayList<>();
 	}
 
 	private boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {
@@ -79,23 +78,18 @@ public class TabuSearch {
 						// quelle trovate in precedenza
 						double penalty = model.computePenalty(newSol);
 						if (!tabulist.contains(new TLelement(e, i))
-								|| (tabulist.contains(new TLelement(e, i)) && penalty <= theBestPenalty)) {
+								|| (tabulist.contains(new TLelement(e, i)) && penalty < optPenalty)) {
 
 							tl = new TLelement(e, i);
 							bestPenalty = (actualPenalty - newPenalty);
 							bestSol = newSol.clone();
 
-							if (penalty < theBestPenalty) {
-								theBestPenalty = penalty;
-								// System.out.print("\n"+theBestPenalty);
-							}
-
 						}
 
-						if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
+						/*if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
 							chromPenalty = penalty;
 							subSol = newSol.clone();
-						}
+						}*/
 					}
 				}
 			}
@@ -104,10 +98,10 @@ public class TabuSearch {
 		// una volta visitato tutti gli esami, provati tutti i timeslot e trovato la
 		// mossa che mi restituisce una
 		// variazione di penalità migliore, salvo la mossa
-		if (tl.getE() > -1)
+		if (tl.getE() > -1 && !tabulist.contains(tl))
 			tabulist.add(tl);
-		else
-			bestSol = subSol;
+		/*else
+			bestSol = subSol;*/
 
 		// se la tabulist ha una dimensione superiore al numero di esami per la media di
 		// timeslot per esami,
@@ -136,11 +130,10 @@ public class TabuSearch {
 
 	// metodo che richiamo nel crossover
 	public Integer[] run(Integer[] chrom) {
-		// tabulist = new ArrayList<>();
+		tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
-		double optPenalty;
-		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)-1; // valore che mi serve per definire la
+		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom); // valore che mi serve per definire la
 																			// dimensione della tabulist
 
 		Integer[] optSolution = chrom;
@@ -166,17 +159,18 @@ public class TabuSearch {
 				// System.out.println("Actual solution: " + Arrays.toString(solution) + "\nWith
 				// penalty: " + currentPenalty);
 
-				if (newPenalty < optPenalty) {
-					optSolution = newSolution.clone();
-					optPenalty = currentPenalty;
-				}
 
-			} else {
-				if (!isMinLocalYet(newSolution))
+			} else if (!isMinLocalYet(newSolution)) {
 					minLoc.add(newSolution.clone());
-
-				if (newPenalty < optPenalty)
-					optSolution = newSolution.clone();
+					currentSolution = chrom; 
+					currentPenalty = model.computePenalty(currentSolution);
+					
+					if (newPenalty < optPenalty) {
+						optSolution = newSolution.clone();
+						optPenalty = newPenalty;
+					} else break;
+					
+			} else {
 
 				// esco dal tabusearch e restituisco la soluzione
 				// migliore che ho trovato
