@@ -26,6 +26,7 @@ public class GeneticAlgorithm {
 	private List<Integer> sortedExmToSchedule;
 	private TabuSearch ts;
 	private double bestBenchmark;
+	private int counter_iteration;
 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -53,22 +54,21 @@ public class GeneticAlgorithm {
 
 	public void fit_predict() {
 		this.initial_population_RANDOM();
-		// this.print_population();
+		this.print_population();
 		this.benchmark();
 		// this.print_banchmark();
-		int i = 0;
+		this.counter_iteration = 0;
 
 		// crossover fino a scadenza dei 180/300 secondi
 		while (true) {
-			// System.out.print("\n"+ i++ +"th Iteration - Time:
-			// "+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
-
+			 //System.out.print("\n"+ counter_iteration++ +"th Iteration - Time:"+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
+			this.counter_iteration++;
 			this.crossover();
 			this.benchmark();
 			// this.print_population();
-			// this.print_banchmark();
+			//this.print_banchmark();
 
-			if ((System.currentTimeMillis() - model.timeStart) > (180 * 1000)) { // termino il programma dopo 300s
+			if ((System.currentTimeMillis() - model.timeStart) > (1000 * 1000)) { // termino il programma dopo 300s
 				System.out.print("\nBest Bench: " + bestBenchmark
 						+ /* "\nBest Solution: "+Arrays.toString(bestSolution)+ */"\n");
 
@@ -371,7 +371,7 @@ public class GeneticAlgorithm {
 		if (Arrays.stream(this.benchmark).min().getAsDouble() < bestBenchmark) {
 			bestBenchmark = Arrays.stream(this.benchmark).min().getAsDouble();
 			
-			System.out.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
+			System.out.println( "Iteration: " + this.counter_iteration + " Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
 					+ " s - New best benchmark : " + bestBenchmark + " - Ratio: " + ratio + "\n");
 			
 			for(Integer[] c : population)
