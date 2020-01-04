@@ -86,10 +86,10 @@ public class TabuSearch {
 
 						}
 
-						/*if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
+						if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
 							chromPenalty = penalty;
 							subSol = newSol.clone();
-						}*/
+						}
 					}
 				}
 			}
@@ -98,10 +98,10 @@ public class TabuSearch {
 		// una volta visitato tutti gli esami, provati tutti i timeslot e trovato la
 		// mossa che mi restituisce una
 		// variazione di penalità migliore, salvo la mossa
-		if (tl.getE() > -1 && !tabulist.contains(tl))
+		if (tl.getE() > -1 )
 			tabulist.add(tl);
-		/*else
-			bestSol = subSol;*/
+		else
+			bestSol = subSol;
 
 		// se la tabulist ha una dimensione superiore al numero di esami per la media di
 		// timeslot per esami,
@@ -168,12 +168,16 @@ public class TabuSearch {
 					if (newPenalty < optPenalty) {
 						optSolution = newSolution.clone();
 						optPenalty = newPenalty;
+						// System.out.println(optPenalty);
 					} else break;
 					
 			} else {
 
 				// esco dal tabusearch e restituisco la soluzione
 				// migliore che ho trovato
+				if (newPenalty < optPenalty) 
+					optSolution = newSolution.clone();
+				
 				break;
 			}
 		} while (true);
