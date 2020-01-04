@@ -57,7 +57,7 @@ public class GeneticAlgorithm {
 
 	public void fit_predict() {
 		this.initial_population_RANDOM();
-		this.print_population();
+		// this.print_population();
 		this.benchmark();
 		// this.print_banchmark();
 		this.counter_iteration = 0;
@@ -419,7 +419,7 @@ public class GeneticAlgorithm {
 
 				} while (!isFeasible(chromosome) || existYet(chromosome));
 
-				population[c] = ts.run(chromosome);
+				population[c] = chromosome.clone();
 			}
 			
 			tabulist.clear();
