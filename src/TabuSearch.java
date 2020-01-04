@@ -168,8 +168,7 @@ public class TabuSearch {
 
 				if (newPenalty < optPenalty) {
 					optSolution = newSolution.clone();
-					optPenalty = currentPenalty;
-					
+					optPenalty = newPenalty;
 				} else break;
 			
 			} else {
