@@ -314,16 +314,10 @@ public class GeneticAlgorithm {
 		Integer[][] childs = new Integer[2][n_exams];
 
 		// Calculate a random crossing section
-		do {
 		crossingSecStart = rand.nextInt(n_exams);
 		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart) + crossingSecStart);
 		
-		} while(tabulist.contains(new TLelement(crossingSecStart, crossingSecEnd)));
 		
-		tabulist.add(new TLelement(crossingSecStart, crossingSecEnd));
-		
-		if(tabulist.size() > this.n_exams)
-				tabulist.remove(0);
 		// System.out.print("Crossing Section: " + crossingSecStart + " - " +
 		// crossingSecEnd + "\n");
 
