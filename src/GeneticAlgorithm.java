@@ -27,6 +27,8 @@ public class GeneticAlgorithm {
 	private TabuSearch ts;
 	private double bestBenchmark;
 	private int counter_iteration;
+	private long lastBenchFound;
+	private List<TLelement> tabulist;
 
 	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
@@ -41,6 +43,7 @@ public class GeneticAlgorithm {
 		this.rand = new Random();
 		this.ts = new TabuSearch(this.model);
 		this.bestBenchmark = Double.MAX_VALUE;
+		this.tabulist = new ArrayList<TLelement>();
 	}
 
 	public boolean existYet(Integer[] chrom) {
@@ -66,9 +69,9 @@ public class GeneticAlgorithm {
 			this.crossover();
 			this.benchmark();
 			// this.print_population();
-			//this.print_banchmark();
+			// this.print_banchmark();
 
-			if ((System.currentTimeMillis() - model.timeStart) > (1000 * 1000)) { // termino il programma dopo 300s
+			if ((System.currentTimeMillis() - model.timeStart) > (180 * 1000)) { // termino il programma dopo 300s
 				System.out.print("\nBest Bench: " + bestBenchmark
 						+ /* "\nBest Solution: "+Arrays.toString(bestSolution)+ */"\n");
 
@@ -122,13 +125,22 @@ public class GeneticAlgorithm {
 
 				doRecursive(chromosome, 0, sortedExmToSchedule.get(0), this.n_exams);
 
-				Collections.swap(sortedExmToSchedule, 0, rand.nextInt(n_exams));
+				Collections.swap(sortedExmToSchedule, 0, c);
 				// per generare soluzioni il più possibili diverse dopo la creazione
 				// di una soluzine inverto l'ordine di due esami
 
 			} while (!isFeasible(chromosome) || existYet(chromosome));
-
-			population[c] = ts.run(chromosome);
+			
+			// chromosome = ts.run(chromosome);
+			
+			if(getChromBenchmark(chromosome) < bestBenchmark) {
+				bestBenchmark = getChromBenchmark(chromosome);
+				model.writeFdile(chromosome);
+				System.out.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
+						+ " s - New best benchmark : " + bestBenchmark + "\n");
+			}
+			
+			population[c] = chromosome.clone();
 		}
 
 	}
@@ -297,11 +309,21 @@ public class GeneticAlgorithm {
 		parents[0] = population[rand.nextInt(n_chrom)].clone();
 		parents[1] = population[rand.nextInt(n_chrom)].clone();
 
-		// Calculate a random crossing section
-		int crossingSecStart = rand.nextInt(n_exams);
-		int crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart) + crossingSecStart);
+		int crossingSecStart ;
+		int crossingSecEnd ;
 		Integer[][] childs = new Integer[2][n_exams];
 
+		// Calculate a random crossing section
+		do {
+		crossingSecStart = rand.nextInt(n_exams);
+		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart) + crossingSecStart);
+		
+		} while(tabulist.contains(new TLelement(crossingSecStart, crossingSecEnd)));
+		
+		tabulist.add(new TLelement(crossingSecStart, crossingSecEnd));
+		
+		if(tabulist.size() > this.n_exams)
+				tabulist.remove(0);
 		// System.out.print("Crossing Section: " + crossingSecStart + " - " +
 		// crossingSecEnd + "\n");
 
@@ -314,7 +336,7 @@ public class GeneticAlgorithm {
 		// Order Crossover modified
 		for (int i = 0; i < 2; i++) {
 			int k = 0; // contatore di ricorsioni fallite
-
+			getSortedExmToScheduleByNumStudent();
 			do {
 				int numExamsNotAssignedYet = (this.n_exams - (crossingSecEnd + 1 - crossingSecStart));
 				found = false;
@@ -373,6 +395,9 @@ public class GeneticAlgorithm {
 			
 			System.out.println( "Iteration: " + this.counter_iteration + " Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
 					+ " s - New best benchmark : " + bestBenchmark + " - Ratio: " + ratio + "\n");
+			tabulist.clear();
+			lastBenchFound = System.currentTimeMillis();
+			
 			
 			for(Integer[] c : population)
 				if(getChromBenchmark(c)<=bestBenchmark) {
@@ -381,7 +406,7 @@ public class GeneticAlgorithm {
 				}
 		}
 
-		if (ratio > 0.99995) {// da teoria libro
+		if (ratio > 0.95 && (System.currentTimeMillis() - lastBenchFound) > (45 * 1000)) {// da teoria libro
 			for (int c : getIndexBadChroms()) {
 
 				do {
@@ -396,7 +421,9 @@ public class GeneticAlgorithm {
 
 				population[c] = ts.run(chromosome);
 			}
-
+			
+			tabulist.clear();
+			lastBenchFound = Long.MAX_VALUE;
 			System.out.println("Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
 					+ " s - NEW ENTRY POPULATION - Ratio:" + ratio + "\n");
 		}
@@ -410,10 +437,10 @@ public class GeneticAlgorithm {
 		for (int k = 0; k < this.n_chrom; k++)
 			benchs.put(k, this.benchmark[k]);
 
-		idx = benchs.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey)
+		idx = benchs.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey)
 				.collect(Collectors.toList());
 
-		for (int k = 0; k < this.n_chrom / 2; k++)
+		//for (int k = 0; k < this.n_chrom/2; k++)
 			idx.remove(0);
 
 		return idx;
@@ -446,8 +473,5 @@ public class GeneticAlgorithm {
 		}
 	}
 
-	public Integer[][] getPopulation() {
-		return population;
-	}
 
 }
