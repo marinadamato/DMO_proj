@@ -14,12 +14,26 @@ public class Model {
 	private HashSet<String> studs;
 	long timeStart;
 	private String path;
+	private double optPenalty;
 
 	public Model() {
 		super();
 		this.timeStart = System.currentTimeMillis();
 		exms = new HashMap<Integer, Exam>();
 		studs = new HashSet<String>();
+		this.optPenalty = Double.MAX_VALUE;
+	}
+	
+	public boolean isNewOpt(Integer[] solution) {
+		double penalty = computePenalty(solution);
+		
+		if(penalty<optPenalty) {
+			optPenalty = penalty;
+			this.writeFdile(solution);
+			return true;
+		}
+		
+		return false;
 	}
 
 	public int getN_timeslots() {
@@ -119,7 +133,7 @@ public class Model {
 		}
 	}
 
-		private int[][] buildNeEMatrix() {
+	private int[][] buildNeEMatrix() {
 
 		this.nEe = new int[exms.size()][exms.size()];
 		ArrayList<String> eList, EList;
@@ -161,6 +175,17 @@ public class Model {
 		penalty = penalty / studs.size();
 
 		return penalty;
+	}
+	
+	public boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {
+		for (int e = 0; e < this.exms.size(); e++) {
+			if (e != exam_id && chrom[e] != null) {
+				if (chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void writeFdile(Integer[] sol) {

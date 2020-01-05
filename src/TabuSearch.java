@@ -9,24 +9,13 @@ public class TabuSearch {
 	private int n_timeslots;
 	private List<Integer[]> minLoc;
 	private int avgTimeSlotNotConflictual;
-	private double optPenalty = Double.MAX_VALUE;
+	private double optPenaltyLocal = Double.MAX_VALUE;
 
 	public TabuSearch(Model model) {
 		this.model = model;
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
 		this.minLoc = new ArrayList<Integer[]>();
-	}
-
-	private boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {
-		for (int e = 0; e < this.n_exams; e++) {
-			if (e != exam_id && chrom[e] != null) {
-				if (chrom[e] == time_slot && this.model.getnEe()[e][exam_id] > 0) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	// uno dei dei principali problemi del tabusearch iniziale era che risultava
@@ -65,20 +54,20 @@ public class TabuSearch {
 			actualPenalty = computePenaltyByExam(chrom, e); // calcolo peso-penalità dell'esame e
 
 			for (int i = 1; i <= this.n_timeslots; i++) {// : getBestPath(newSol)) { // per ogni time slot
-				if (!are_conflictual(i, e, newSol)) { // controllo se posso inserire il timeslot in e
+				if (!model.are_conflictual(i, e, newSol) && i != chrom[e]) { // controllo se posso inserire il timeslot in e
 					newSol[e] = i;
 					newPenalty = computePenaltyByExam(newSol, e); // calcolo il peso-penalità con il nuovo timeslot
 
 					// se la differenza tra le due penalità (nuova e vecchia) è maggiore della
 					// precende soluzione
 					// migliore
-					if ((actualPenalty - newPenalty) > bestPenalty && !isMinLocalYet(newSol)) {
+					if ((actualPenalty - newPenalty) > bestPenalty ) {
 						// controllo se è una mossa tabu o se anche tabu, mi genera una soluzione
 						// migliore di tutte
 						// quelle trovate in precedenza
 						double penalty = model.computePenalty(newSol);
 						if (!tabulist.contains(new TLelement(e, i))
-								|| (tabulist.contains(new TLelement(e, i)) && penalty < optPenalty)) {
+								|| (tabulist.contains(new TLelement(e, i)) && penalty < optPenaltyLocal)) {
 
 							tl = new TLelement(e, i);
 							bestPenalty = (actualPenalty - newPenalty);
@@ -87,10 +76,10 @@ public class TabuSearch {
 
 						}
 
-						if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
+						/*if (tabulist.contains(new TLelement(e, i)) && penalty < chromPenalty) {
 							chromPenalty = penalty;
 							subSol = newSol.clone();
-						}
+						} */
 					}
 				}
 			}
@@ -101,8 +90,8 @@ public class TabuSearch {
 		// variazione di penalità migliore, salvo la mossa
 		if (tl.getE() > -1)
 			tabulist.add(tl);
-		else
-			bestSol = subSol;
+		//else
+			//bestSol = subSol;
 
 		// se la tabulist ha una dimensione superiore al numero di esami per la media di
 		// timeslot per esami,
@@ -115,7 +104,7 @@ public class TabuSearch {
 		// mosse. Siccome potrebbe essere troppo grande, nel calcolo della media, ho
 		// diminuito di 1 la media trovata.
 		// Comunque anche questo va testato
-		if (tabulist.size() > this.n_exams * this.avgTimeSlotNotConflictual)
+		if (tabulist.size() > this.n_exams /* * this.avgTimeSlotNotConflictual*/)
 			tabulist.remove(0);
 
 		return bestSol;
@@ -134,7 +123,7 @@ public class TabuSearch {
 		tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
-		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom); // valore che mi serve per definire la
+		//avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)*0; // valore che mi serve per definire la
 																			// dimensione della tabulist
 
 		Integer[] optSolution = chrom;
@@ -143,7 +132,7 @@ public class TabuSearch {
 
 		currentSolution = chrom; // soluzione che gli passo dal crossover
 		currentPenalty = model.computePenalty(currentSolution);
-		optPenalty = currentPenalty;
+		optPenaltyLocal = currentPenalty;
 
 		do {
 			newSolution = generateNeigh(currentSolution); // mi genero il vicinato
@@ -166,15 +155,19 @@ public class TabuSearch {
 				currentSolution = chrom;
 				currentPenalty = model.computePenalty(currentSolution);
 
-				if (newPenalty < optPenalty) {
+				if (newPenalty < optPenaltyLocal) {
 					optSolution = newSolution.clone();
-					optPenalty = newPenalty;
+					optPenaltyLocal = newPenalty;
+					
+					if(model.isNewOpt(optSolution))
+						System.out.println( "	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
+								+ " s - TB has found a better penalty : " + optPenaltyLocal );
 				} else break;
 			
 			} else {
 				// esco dal tabusearch e restituisco la soluzione
 				// migliore che ho trovato
-				if (newPenalty < optPenalty) 
+				if (newPenalty < optPenaltyLocal) 
 					optSolution = newSolution.clone();
 				
 				break;
@@ -195,7 +188,7 @@ public class TabuSearch {
 
 		for (int e1 = 0; e1 < n_exams; e1++) {
 			for (int i = 1; i <= this.n_timeslots; i++)
-				if (!are_conflictual(i, e1, chrom))
+				if (!model.are_conflictual(i, e1, chrom))
 					notConflictual++;
 
 		}
