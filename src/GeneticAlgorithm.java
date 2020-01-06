@@ -264,8 +264,8 @@ public class GeneticAlgorithm {
 		Integer[][] childs = new Integer[2][n_exams];
 
 		// Calculate a random crossing section
-		crossingSecStart = rand.nextInt(n_exams);
-		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart - this.minimum_cut ) +crossingSecStart + this.minimum_cut);
+		crossingSecStart = rand.nextInt(n_exams- this.minimum_cut);
+		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart ) +crossingSecStart);
 		
 		
 		// System.out.print("Crossing Section: " + crossingSecStart + " - " +
@@ -342,7 +342,7 @@ public class GeneticAlgorithm {
 			
 		}
 
-		if (ratio > 0.95 && (System.currentTimeMillis() - lastBenchFound) > (35 * 1000)) {// da teoria libro
+		if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (35 * 1000)  ) {// da teoria libro
 			for (int c : getIndexBadChroms()) {
 
 				do {
