@@ -27,6 +27,7 @@ public class GeneticAlgorithm {
 	private int counter_iteration;
 	private long lastBenchFound;
 	private int tlim;
+	private int minimum_cut;
 
 	public GeneticAlgorithm(Model model, int n_chrom,int tlim) {
 		super();
@@ -41,6 +42,7 @@ public class GeneticAlgorithm {
 		this.ts = new TabuSearch(this.model);
 		this.optPenalty = Double.MAX_VALUE;
 		this.tlim=tlim;
+		this.minimum_cut=(int) Math.round(this.n_exams * 0.15);
 	}
 
 	public boolean existYet(Integer[] chrom) {
@@ -69,6 +71,7 @@ public class GeneticAlgorithm {
 			// this.print_banchmark();
 
 			if ((System.currentTimeMillis() - model.timeStart) > (this.tlim * 1000)) { // termino il programma dopo 300s
+				if (!model.old_flag) System.out.print("****Old solution was better****\n \nThis run:");
 				System.out.print("\nBest Bench: " + optPenalty
 						+ /* "\nBest Solution: "+Arrays.toString(bestSolution)+ */"\n");
 
@@ -262,7 +265,7 @@ public class GeneticAlgorithm {
 
 		// Calculate a random crossing section
 		crossingSecStart = rand.nextInt(n_exams);
-		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart) + crossingSecStart);
+		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart - this.minimum_cut ) +crossingSecStart + this.minimum_cut);
 		
 		
 		// System.out.print("Crossing Section: " + crossingSecStart + " - " +

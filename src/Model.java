@@ -15,6 +15,7 @@ public class Model {
 	long timeStart;
 	private String path;
 	private double optPenalty;
+	public boolean old_flag;
 
 	public Model() {
 		super();
@@ -22,6 +23,7 @@ public class Model {
 		exms = new HashMap<Integer, Exam>();
 		studs = new HashSet<String>();
 		this.optPenalty = Double.MAX_VALUE;
+		this.old_flag=false;
 	}
 	
 	public boolean isNewOpt(Integer[] solution) {
@@ -216,6 +218,7 @@ public class Model {
 		}
 		catch (IOException e){};
 		if (old_pen>this.optPenalty) {
+			this.old_flag=true;
 			try {
 				file.createNewFile();
 				FileWriter myWriter = new FileWriter(file, false);
@@ -228,8 +231,6 @@ public class Model {
 				System.out.println("An error occurred");
 				e.printStackTrace();
 			}
-		} else {
-			System.out.println("old solution is better \n");
 		}
 	}
 
