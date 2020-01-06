@@ -29,7 +29,7 @@ public class Model {
 		
 		if(penalty<optPenalty) {
 			optPenalty = penalty;
-			this.writeFdile(solution);
+			this.writeFdile2(solution);
 			return true;
 		}
 		
@@ -200,6 +200,36 @@ public class Model {
 		} catch (IOException e) {
 			System.out.println("An error occurred");
 			e.printStackTrace();
+		}
+	}
+	
+	// to eliminate before sending the code to Manerba
+	public void writeFdile2(Integer[] sol) {
+		File file = new File(this.path+"_DMOgroup16.sol");
+		
+		double old_pen=200;
+		try {
+			BufferedReader old_file = new BufferedReader(new FileReader(file));
+			old_pen = Double.parseDouble(old_file.readLine());
+			old_file.close();
+			//System.out.println(old_pen);
+		}
+		catch (IOException e){};
+		if (old_pen>this.optPenalty) {
+			try {
+				file.createNewFile();
+				FileWriter myWriter = new FileWriter(file, false);
+				myWriter.write(this.optPenalty+ "\n");
+				for (int i = 0; i < sol.length; i++) {
+					myWriter.write(exms.get(i).getID() + " " + sol[i] + "\n");
+				}
+				myWriter.close();
+			} catch (IOException e) {
+				System.out.println("An error occurred");
+				e.printStackTrace();
+			}
+		} else {
+			System.out.println("old solution is better \n");
 		}
 	}
 
