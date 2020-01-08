@@ -6,13 +6,11 @@ public class Timetabling {
 		//ricordarsi di implementare la scirttura da terminale 
 		//java -jar ETPsolverDMOgroupXX.jar instancename -t tlim
 		int tlim=180;
-		String instance="instance08";
+		String instance="instance01";
 		
 		Model model = new Model();
 		
 		model.loadIstance("Instances/"+instance);
-
-		GeneticAlgorithm ga = new GeneticAlgorithm(model, 12,tlim); // quanti cromosomi sarebbe meglio utilizzare??
-		ga.fit_predict();
+		model.runGA(tlim);
 	}
 }

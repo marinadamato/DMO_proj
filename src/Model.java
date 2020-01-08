@@ -37,6 +37,23 @@ public class Model {
 		
 		return false;
 	}
+	
+	public void runGA(int tlim) {
+		// Per definire numero cromosomi? valuto difficoltà di una istanza in base al rapporto tra media conflitti esame e timeslot,
+		// più è alto il rapporto, maggiore è la difficoltà nel posizionare gli esami
+		/* int count = 0;
+		
+		for (int i = 0; i < this.exms.size(); i++) 
+			for (int j = i + 1; j < this.exms.size(); j++) 
+				if(nEe[i][j] > 0)
+					count += 1;
+		System.out.println((double) (count/this.exms.size())/this.n_timeslots); */
+		
+		
+		
+		GeneticAlgorithm ga = new GeneticAlgorithm(this, 8,tlim); // quanti cromosomi sarebbe meglio utilizzare??
+		ga.fit_predict();
+	}
 
 	public int getN_timeslots() {
 		return this.n_timeslots;
@@ -149,7 +166,7 @@ public class Model {
 
 					nEe[entryExam1.getKey()][entryExam2.getKey()] = eList.size();
 				} else
-					nEe[entryExam1.getKey()][entryExam2.getKey()] = Integer.MAX_VALUE;
+					nEe[entryExam1.getKey()][entryExam2.getKey()] = 0;
 
 			}
 		}
@@ -179,7 +196,7 @@ public class Model {
 		return penalty;
 	}
 	
-	public boolean are_conflictual(int time_slot, int exam_id, Integer[] chrom) {
+	public boolean areConflictual(int time_slot, int exam_id, Integer[] chrom) {
 		for (int e = 0; e < this.exms.size(); e++) {
 			if (e != exam_id && chrom[e] != null) {
 				if (chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {

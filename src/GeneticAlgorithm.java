@@ -42,7 +42,7 @@ public class GeneticAlgorithm {
 		this.ts = new TabuSearch(this.model);
 		this.optPenalty = Double.MAX_VALUE;
 		this.tlim=tlim;
-		this.minimum_cut=(int) Math.round(this.n_exams * 0.15);
+		this.minimum_cut=(int) Math.round(this.n_exams * 0.1);
 	}
 
 	public boolean existYet(Integer[] chrom) {
@@ -156,7 +156,7 @@ public class GeneticAlgorithm {
 			} else {
 				for (int i : getBestPath(chrom, exam_id)) { // timeslot
 					if (!found) {
-						if (!model.are_conflictual(i, exam_id, chrom)) {
+						if (!model.areConflictual(i, exam_id, chrom)) {
 							chrom[exam_id] = i;
 							doRecursive(chrom, step + 1, sortedExmToSchedule.get(step + 1), numExamsNotAssignedYet - 1);
 							chrom[exam_id] = null;
@@ -238,9 +238,9 @@ public class GeneticAlgorithm {
 		// System.out.print("Best Bench: "+1/bestBenchmark+/*"\nBest Solution:
 		// "+Arrays.toString(bestSolution)+*/"\n");
 
-		int indParent1 = 0, indParent2 = 0;
-		double maxValueP1 = Double.MIN_VALUE, maxValueP2 = Double.MIN_VALUE;
-		Integer[][] parents = new Integer[2][n_exams];
+		int indParent1 = 0;
+		double maxValueP1 = Double.MIN_VALUE;
+		Integer[] parent = new Integer[n_exams];
 
 		// Search the two worst fitness in my population
 		for (int i = 0; i < this.n_chrom; i++) {
@@ -249,19 +249,11 @@ public class GeneticAlgorithm {
 				indParent1 = i;
 			}
 		}
-
-		for (int i = 0; i < this.n_chrom; i++) {
-			if (penalty[i] > maxValueP2 && indParent1!=i  ) {
-				maxValueP2 = penalty[i];
-				indParent2 = i;
-			}
-		}
-		parents[0] = population[rand.nextInt(n_chrom)].clone();
-		parents[1] = population[rand.nextInt(n_chrom)].clone();
+		parent = population[rand.nextInt(n_chrom)].clone();
 
 		int crossingSecStart ;
 		int crossingSecEnd ;
-		Integer[][] childs = new Integer[2][n_exams];
+		Integer[] child = new Integer[n_exams];
 
 		// Calculate a random crossing section
 		crossingSecStart = rand.nextInt(n_exams- this.minimum_cut);
@@ -273,58 +265,42 @@ public class GeneticAlgorithm {
 
 		// copy crossing section two chromosome
 		for (int i = crossingSecStart; i <= crossingSecEnd; i++) {
-			childs[0][i] = parents[0][i];
-			childs[1][i] = parents[1][i];
+			child[i] = parent[i];
 		}
 
 		// Order Crossover modified
-		for (int i = 0; i < 2; i++) {
-			int k = 0; // contatore di ricorsioni fallite
-			getSortedExmToScheduleByNumStudent();
-			do {
-				int numExamsNotAssignedYet = (this.n_exams - (crossingSecEnd + 1 - crossingSecStart));
-				found = false;
-				chromosome = new Integer[this.n_exams];
-				nLoop = 0;
+		int k = 0; // contatore di ricorsioni fallite
+		getSortedExmToScheduleByNumStudent();
+		do {
+			int numExamsNotAssignedYet = (this.n_exams - (crossingSecEnd + 1 - crossingSecStart));
+			found = false;
+			chromosome = new Integer[this.n_exams];
+			nLoop = 0;
 
-				// va testato se è meglio la ricorsione del crossover o usare la stessa per
-				// generare le soluzioni iniziali
-				doRecursive(childs[i], 0, sortedExmToSchedule.get(0), numExamsNotAssignedYet);
+			// va testato se è meglio la ricorsione del crossover o usare la stessa per
+			// generare le soluzioni iniziali
+			doRecursive(child, 0, sortedExmToSchedule.get(0), numExamsNotAssignedYet);
 
-				// se la mia ricorsione è fallita ed è uscita dal ciclo, provo a modificare
-				// l'ordine di due esami
-				Collections.swap(sortedExmToSchedule, 0, k++);
+			// se la mia ricorsione è fallita ed è uscita dal ciclo, provo a modificare
+			// l'ordine di due esami
+			Collections.swap(sortedExmToSchedule, 0, k++);
 
-				if (k > this.n_exams) { // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo
-										// un'altra
-					System.out.println("	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000 + " s - Failed\n");
-					return;
-				}
-			} while (!isFeasible(chromosome) || existYet(chromosome) || ts.isMinLocalYet(chromosome));
+			if (k > this.n_exams) { // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo
+									// un'altra
+				System.out.println("	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000 + " s - Failed\n");
+				return;
+			}
+		} while (!isFeasible(chromosome) || existYet(chromosome) || ts.isMinLocalYet(chromosome));
 
-			childs[i] = chromosome.clone();
+		child = chromosome.clone();
 
-		}
 
-		childs[0] = ts.run(childs[0]).clone();
-		childs[1] = ts.run(childs[1]).clone();
+		child = ts.run(child).clone();
 
-		if (model.computePenalty(childs[0]) > model.computePenalty(childs[1])) {
 
-			if (model.computePenalty(childs[0]) < penalty[indParent1])
-				population[indParent1] = childs[0].clone();
+		if (model.computePenalty(child) < penalty[indParent1])
+			population[indParent1] = child.clone();
 
-			if (model.computePenalty(childs[1]) < penalty[indParent2])
-				population[indParent2] = childs[1].clone();
-
-		} else {
-
-			if (model.computePenalty(childs[1]) < penalty[indParent1])
-				population[indParent1] = childs[1].clone();
-
-			if (model.computePenalty(childs[0]) < penalty[indParent2])
-				population[indParent2] = childs[0].clone();
-		}
 
 		this.calculatePenaltyPop();
 
@@ -383,7 +359,7 @@ public class GeneticAlgorithm {
 
 	private boolean isFeasible(Integer[] chrom) {
 		for (int e = 0; e < this.n_exams; e++) {
-			if (chrom[e] == null || model.are_conflictual(chrom[e], e, chrom))
+			if (chrom[e] == null || model.areConflictual(chrom[e], e, chrom))
 				return false;
 		}
 

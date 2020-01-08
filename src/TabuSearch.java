@@ -54,7 +54,7 @@ public class TabuSearch {
 			actualPenalty = computePenaltyByExam(chrom, e); // calcolo peso-penalità dell'esame e
 
 			for (int i = 1; i <= this.n_timeslots; i++) {// : getBestPath(newSol)) { // per ogni time slot
-				if (!model.are_conflictual(i, e, newSol) && i != chrom[e]) { // controllo se posso inserire il timeslot in e
+				if (!model.areConflictual(i, e, newSol) && i != chrom[e]) { // controllo se posso inserire il timeslot in e
 					newSol[e] = i;
 					newPenalty = computePenaltyByExam(newSol, e); // calcolo il peso-penalità con il nuovo timeslot
 
@@ -188,7 +188,7 @@ public class TabuSearch {
 
 		for (int e1 = 0; e1 < n_exams; e1++) {
 			for (int i = 1; i <= this.n_timeslots; i++)
-				if (!model.are_conflictual(i, e1, chrom))
+				if (!model.areConflictual(i, e1, chrom))
 					notConflictual++;
 
 		}
