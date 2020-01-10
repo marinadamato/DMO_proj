@@ -125,7 +125,6 @@ public class TabuSearch {
 		double newPenalty;
 		//avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom)*0; // valore che mi serve per definire la
 																			// dimensione della tabulist
-
 		Integer[] optSolution = chrom;
 		Integer[] newSolution;
 		Integer[] currentSolution;
@@ -150,25 +149,24 @@ public class TabuSearch {
 				// penalty: " + currentPenalty);
 
 			} else if (!isMinLocalYet(newSolution)) {
-				
-				minLoc.add(newSolution.clone());
-				currentSolution = chrom;
-				currentPenalty = model.computePenalty(currentSolution);
 
+				minLoc.add(newSolution.clone());
+				
 				if (newPenalty < optPenaltyLocal) {
 					optSolution = newSolution.clone();
 					optPenaltyLocal = newPenalty;
 					
 					if(model.isNewOpt(optSolution))
 						System.out.println( "	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
-								+ " s - TB has found a better penalty : " + optPenaltyLocal );
+								+ " s - TB has found a better penalty : " + model.getOptPenalty() );
 				} else break;
-			
+				
+				currentSolution = model.swapTimeslot(newSolution);
+				currentPenalty = model.computePenalty(currentSolution);
+				
 			} else {
 				// esco dal tabusearch e restituisco la soluzione
 				// migliore che ho trovato
-				if (newPenalty < optPenaltyLocal) 
-					optSolution = newSolution.clone();
 				
 				break;
 			}
