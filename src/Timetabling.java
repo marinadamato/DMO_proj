@@ -6,7 +6,7 @@ public class Timetabling {
 		//ricordarsi di implementare la scirttura da terminale 
 		//java -jar ETPsolverDMOgroupXX.jar instancename -t tlim
 		int tlim=600;
-		String instance="instance01";
+		String instance="instance04";
 		
 		Model model = new Model();
 		model.loadIstance("Instances/"+instance);

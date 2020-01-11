@@ -66,11 +66,7 @@ public class GeneticAlgorithm {
 		while (true) {
 			 //System.out.print("\n"+ counter_iteration++ +"th Iteration - Time:"+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
 			this.counter_iteration++;
-			double random = Math.random()*1;
-			
-			
-				this.crossover();
-
+			this.crossover();
 			this.calculatePenaltyPop();
 			
 			// rapporto tra la fitness media e la fitness massima
@@ -80,13 +76,13 @@ public class GeneticAlgorithm {
 						
 						
 			if (Arrays.stream(this.penalty).min().getAsDouble() < optPenalty) {
-				optPenalty = Arrays.stream(this.penalty).min().getAsDouble();
+				optPenalty = model.getOptPenalty();
 				lastBenchFound = System.currentTimeMillis();
 				System.out.println( "Iteration: " + this.counter_iteration + " -  Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
 						+ "s - Optimal: "+optPenalty+" - Ratio: "+ratio+"\n");
 			}
 
-			if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (55 * 1000)  ) {// da teoria libro
+			/*if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (55 * 1000)  ) {// da teoria libro
 				for (int c : getIndexBadChroms()) {
 					population[c] = model.swapTimeslot(population[c]);
 				}
@@ -94,7 +90,7 @@ public class GeneticAlgorithm {
 				lastBenchFound = Long.MAX_VALUE;
 				System.out.println("\nTime: " + (System.currentTimeMillis() - model.timeStart) / 1000
 						+ " s - NEW ENTRY POPULATION - Ratio:" + ratio + "\n");
-			}
+			}*/
 			
 
 			if ((System.currentTimeMillis() - model.timeStart) > (this.tlim * 1000)) { // termino il programma dopo 300s
@@ -128,61 +124,6 @@ public class GeneticAlgorithm {
 
 		this.ExmsToSchedule.add(-1);
 
-	}
-
-	private Integer[] swapTimeslot() {
-		int idxChild = rand.nextInt(n_chrom);
-		Integer[] child = population[idxChild];;
-		int timeS1 = getBestPath(child).get(0);//rand.nextInt(this.n_time_slots)+1;
-		int timeS2 = rand.nextInt(this.n_time_slots)+1;
-		
-		List<String> exm1 = new ArrayList<>();
-		List<String> exm2 = new ArrayList<>();
-		
-		// System.out.println(model.computePenalty(child));
-		
-		for(int i =0; i<this.n_exams; i++) {
-			if(child[i]==timeS1)
-				exm1.add(String.valueOf(i));
-		}
-		
-		for(int i =0; i<this.n_exams; i++) {
-			if(child[i]==timeS2)
-				exm2.add(String.valueOf(i));
-		}
-		
-		List<String> exmSwap1 = new ArrayList<>(exm1);
-		List<String> exmSwap2 = new ArrayList<>(exm2);
-		
-		for(String e : new ArrayList<>(exm1))
-			for(String e2 : exm2)
-				if(this.nEe[Integer.valueOf(e)][Integer.valueOf(e2)] > 0) {
-					exmSwap1.remove(e);
-					break;
-				}
-		
-		for(String e2 : new ArrayList<>(exm2))
-			for(String e : exm1)
-				if(this.nEe[Integer.valueOf(e2)][Integer.valueOf(e)] > 0) {
-					exmSwap2.remove(e2);
-					break;
-				}
-		
-		for(String e : exm1)
-			child[Integer.valueOf(e)] = timeS2;
-		
-		for(String e : exm2)
-			child[Integer.valueOf(e)] = timeS1;	
-		
-		child = ts.run(child).clone();
-		
-		if (model.computePenalty(child) < penalty[idxChild])
-			population[idxChild] = child;
-		
-		return child;
-		
-		// System.out.println(model.computePenalty(child));				
-		
 	}
 	
 	private void initial_population_RANDOM() {
@@ -372,22 +313,6 @@ public class GeneticAlgorithm {
 		if (model.computePenalty(child) < penalty[indWorstParent])
 			population[indWorstParent] = child.clone();
 
-	}
-
-	private List<Integer> getIndexBadChroms() {
-		List<Integer> idx;
-		HashMap<Integer, Double> pops = new HashMap<Integer, Double>();
-
-		for (int k = 0; k < this.n_chrom; k++)
-			pops.put(k, this.penalty[k]);
-
-		idx = pops.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey)
-				.collect(Collectors.toList());
-
-		//for (int k = 0; k < this.n_chrom/2; k++)
-			//idx.remove(0);
-
-		return idx;
 	}
 
 	private boolean isFeasible(Integer[] chrom) {

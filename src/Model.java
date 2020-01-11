@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class Model {
 
@@ -54,7 +55,7 @@ public class Model {
 					count += 1;
 		//System.out.println((double) count/(this.exms.size()*this.n_timeslots)); 
 		double difficultInstance = (double) count/(this.exms.size()*this.n_timeslots);
-		int nChroms = (int) ((int) 10/difficultInstance); 
+		int nChroms = (int) ((int) 9/difficultInstance); 
 		
 		System.out.println("Number Chrom: "+nChroms);
 		
@@ -196,8 +197,6 @@ public class Model {
 		List<String> exm1 = new ArrayList<>();
 		List<String> exm2 = new ArrayList<>();
 		
-		// System.out.println(model.computePenalty(child));
-		
 		for(int i =0; i<this.exms.size(); i++) {
 			if(sol[i]==timeS1)
 				exm1.add(String.valueOf(i));
@@ -232,9 +231,7 @@ public class Model {
 			sol[Integer.valueOf(e)] = timeS1;	
 		
 		
-		return sol;
-		
-		// System.out.println(model.computePenalty(child));				
+		return sol;			
 		
 	}
 
@@ -309,5 +306,44 @@ public class Model {
 			}
 		}
 	}
+	
+	public List<Integer> getBadTimeSlot(Integer[] chrom) {
+		List<Integer> path;
+		HashMap<Integer, Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 
+		for (int k = 1; k <= this.n_timeslots; k++) {
+			int count = 0;
+			
+			for(int i = 0; i < this.exms.size(); i++)
+				if(chrom[i] == k)
+					count++;
+			
+			numStudentTimeSlot.put(k, count);
+			/*int dist;
+			double penalty = 0;
+
+			for (int i = 0; i < this.exms.size(); i++) {
+				for (int j = 0; j < this.exms.size(); j++) {
+					dist = Math.abs(chrom[i] - chrom[j]);
+					if (dist <= 5 && dist>0) 
+						penalty += (Math.pow(2, 5 - dist) * nEe[i][j]);
+				}
+				
+				if(numStudentTimeSlot.containsKey(chrom[i])) {
+					double p = (numStudentTimeSlot.get(chrom[i]) + penalty);
+					numStudentTimeSlot.replace(chrom[i], p);
+				} else
+					numStudentTimeSlot.put(chrom[i], penalty);
+				
+				penalty = 0;
+			} */
+		}
+
+		path = numStudentTimeSlot.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+				.map(Map.Entry::getKey).collect(Collectors.toList());
+
+		return path;
+	}
+
+	
 }
