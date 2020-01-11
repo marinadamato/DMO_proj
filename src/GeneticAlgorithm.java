@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.*;
 import java.util.Comparator;
 
-public class GeneticAlgorithm {
+public class GeneticAlgorithm implements Runnable {
 
 	private Integer[][] population;
 	private Model model;
@@ -27,10 +27,10 @@ public class GeneticAlgorithm {
 	private TabuSearch ts;
 	private int counter_iteration;
 	private long lastBenchFound;
-	private int tlim;
+	private long tlim;
 	private int minimum_cut;
 
-	public GeneticAlgorithm(Model model, int n_chrom,int tlim) {
+	public GeneticAlgorithm(Model model, int n_chrom,long tlim) {
 		super();
 		this.model = model;
 		this.n_chrom = n_chrom;
@@ -54,23 +54,17 @@ public class GeneticAlgorithm {
 		return false;
 	}
 
-	public void fit_predict() {
-		this.initial_population_RANDOM();
-		// this.printPopulation();
-		// this.calculatePenaltyPop();
-		// this.printPenalty();
-		this.counter_iteration = 0;
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		this.initial_population();
 		double optPenalty = Double.MAX_VALUE;
 
-		// fino a scadenza dei 180/300 secondi
 		while (true) {
-			 //System.out.print("\n"+ counter_iteration++ +"th Iteration - Time:"+(System.currentTimeMillis()-model.timeStart)/1000+" second\n");
-			this.counter_iteration++;
 			this.crossover();
 			this.calculatePenaltyPop();
 			
 			// rapporto tra la fitness media e la fitness massima
-
 			double ratio = (Arrays.stream(this.penalty).min().getAsDouble())
 					/Arrays.stream(this.penalty).average().getAsDouble(); // da teoria libro
 						
@@ -78,30 +72,26 @@ public class GeneticAlgorithm {
 			if (Arrays.stream(this.penalty).min().getAsDouble() < optPenalty) {
 				optPenalty = model.getOptPenalty();
 				lastBenchFound = System.currentTimeMillis();
-				System.out.println( "Iteration: " + this.counter_iteration + " -  Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
-						+ "s - Optimal: "+optPenalty+" - Ratio: "+ratio+"\n");
 			}
 
-			/*if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (55 * 1000)  ) {// da teoria libro
-				for (int c : getIndexBadChroms()) {
-					population[c] = model.swapTimeslot(population[c]);
+			if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (90 * 1000)  ) {// da teoria libro
+				for (int c = 0; c<this.n_chrom/2;c++) { //: getIndexBadChroms()) {
+					do {
+						found = false;
+
+						chromosome = new Integer[this.n_exams];
+						nLoop = 0;
+
+						doRecursive(chromosome, 0, sortedExmsToSchedule.get(0), this.n_exams);
+
+						Collections.swap(sortedExmsToSchedule, 0, c);
+
+					} while (!isFeasible(chromosome) || existYet(chromosome));
+					
+					population[c] = chromosome.clone();
 				}
 				
 				lastBenchFound = Long.MAX_VALUE;
-				System.out.println("\nTime: " + (System.currentTimeMillis() - model.timeStart) / 1000
-						+ " s - NEW ENTRY POPULATION - Ratio:" + ratio + "\n");
-			}*/
-			
-
-			if ((System.currentTimeMillis() - model.timeStart) > (this.tlim * 1000)) { // termino il programma dopo 300s
-				if (!model.old_flag) 
-					System.out.print("****Old solution was better****\n \nThis run:");
-				
-				System.out.print("\nBest penalty: " + model.getOptPenalty()+"\n");
-
-				this.printPopulation();
-				this.printPenaltyPop();
-				System.exit(1);
 			}
 		}
 
@@ -126,7 +116,7 @@ public class GeneticAlgorithm {
 
 	}
 	
-	private void initial_population_RANDOM() {
+	private void initial_population() {
 		this.getSortedExmToScheduleByNumStudent();
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
 
@@ -146,10 +136,7 @@ public class GeneticAlgorithm {
 			} while (!isFeasible(chromosome) || existYet(chromosome));
 			
 			
-			if(model.isNewOpt(chromosome)) {
-				System.out.println("	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
-						+ " s - New best penalty : " + model.getOptPenalty() + "\n");
-			}
+			model.isNewOpt(chromosome);
 			
 			population[c] = chromosome.clone();
 		}
@@ -198,8 +185,7 @@ public class GeneticAlgorithm {
 					nLoop++; // every time i fail a complete for cycle
 
 				if (nLoop > n_exams/2 && !found) {
-					returnBack = (int) (step * Math.random()); // number of time that i have to go back
-					// System.out.print("Step "+ step + " returnBack "+returnBack+ " \n");
+					returnBack = (int) (step * Math.random());
 					nLoop = 0;
 				}
 			}
@@ -207,7 +193,6 @@ public class GeneticAlgorithm {
 		} else {
 			found = true;
 			chromosome = chrom.clone();
-			// System.out.print("Found ");
 		}
 	}
 
@@ -276,13 +261,11 @@ public class GeneticAlgorithm {
 		// Calculate a random crossing section
 		crossingSecStart = rand.nextInt(n_exams- this.minimum_cut);
 		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart ) +crossingSecStart);
-		// System.out.print("Crossing Section: " + crossingSecStart + " - " +
-		// crossingSecEnd + "\n");
-
+		
 		// copy crossing section two chromosome
 		for (int i = crossingSecStart; i <= crossingSecEnd; i++) 
 			child[i] = parent[i];
-
+		
 		// Order Crossover modified
 		int k = 0; // contatore di ricorsioni fallite
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
@@ -293,16 +276,10 @@ public class GeneticAlgorithm {
 			chromosome = new Integer[this.n_exams];
 			nLoop = 0;
 
-			// va testato se è meglio la ricorsione del crossover o usare la stessa per
-			// generare le soluzioni iniziali
 			doRecursive(child, 0, sortedExmsToSchedule.get(0), numExamsNotAssignedYet);
-
-			// se la mia ricorsione è fallita ed è uscita dal ciclo, provo a modificare
-			// l'ordine di due esami
 			Collections.swap(sortedExmsToSchedule, 0, k++);
 
-			if (k > this.n_exams) { // se ho fallito più del numero esami, abbandono sezione di taglio e ne provo un'altra
-				System.out.println("	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000 + " s - Failed\n");
+			if (k > this.n_exams) { 
 				return;
 			}
 			

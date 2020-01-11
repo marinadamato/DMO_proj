@@ -12,7 +12,6 @@ public class TabuSearch {
 	private Model model;
 	private int n_exams;
 	private int n_timeslots;
-	private List<Integer[]> minLoc;
 	private int avgTimeSlotNotConflictual;
 	private double optPenaltyLocal = Double.MAX_VALUE;
 
@@ -20,7 +19,6 @@ public class TabuSearch {
 		this.model = model;
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
-		this.minLoc = new ArrayList<Integer[]>();
 	}
 
 	// uno dei dei principali problemi del tabusearch iniziale era che risultava
@@ -116,8 +114,8 @@ public class TabuSearch {
 	}
 
 	public boolean isMinLocalYet(Integer[] solution) {
-		for (Integer[] mL : minLoc)
-			if (Arrays.equals(mL, solution))
+		for (int ml=0; ml<model.minLoc.size(); ml++)
+			if (Arrays.equals(model.minLoc.get(ml), solution))
 				return true;
 
 		return false;
@@ -155,16 +153,20 @@ public class TabuSearch {
 
 			} else {
 				if (!isMinLocalYet(newSolution)) {
-					minLoc.add(newSolution.clone());
-				} 
+					model.minLoc.add(newSolution.clone());
+				} else break;
 			
 				if (newPenalty < optPenaltyLocal) {
 					optSolution = newSolution.clone();
 					optPenaltyLocal = newPenalty;
 					
-					if(model.isNewOpt(optSolution))
-						System.out.println( "	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
-								+ " s - TB has found a better penalty : " + model.getOptPenalty() );
+					if(model.isNewOpt(optSolution)) {
+						Thread current = Thread.currentThread();
+						System.out.println(current.getName());
+						System.out.println( "Optimal: "+model.getOptPenalty()+"\n");
+					}
+						//System.out.println( "	Time: " + (System.currentTimeMillis() - model.timeStart) / 1000
+						//		+ " s - TB has found a better penalty : " + model.getOptPenalty() );
 				} else break;
 				
 				currentSolution = model.swapTimeslot(newSolution);
