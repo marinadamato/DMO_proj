@@ -24,6 +24,8 @@ public class Parallel implements Runnable{
 		private ArrayList<TLelement> feasibleTL = new ArrayList<TLelement>();
 		private int minConflict = Integer.MAX_VALUE, prevConflicts = Integer.MAX_VALUE;
 		private int TLsize = 100;
+		private int nIteration;
+		private int[] solution;
 		
 	public Parallel(int n_timeslots, HashMap<Integer, Exam> exams, int[][] conflicts, long start, long end) {
 		this.n_timeslots = n_timeslots;
@@ -42,6 +44,7 @@ public class Parallel implements Runnable{
 		Collections.shuffle(list);
 		list.forEach(k->randomExams.put(k, exams.get(k)));
 		this.unassigned=(ArrayList<Exam>) exams.values();
+		this.solution=new int[exams.size()];
 		/*buildExamMap(exams);
 		buildExamsConflicts();
 		setTimeSlot();
@@ -59,13 +62,13 @@ public class Parallel implements Runnable{
 		initialSol();
 		
 		// Then, for the not taken exams, find the first feasible solution
-		//feasibleSearch();
+		feasibleSearch();
 		
 		// Saving the current solution
-		//saveSolution();
+		saveSolution();
 
-		//if(! isFeasibile()) 
-			//return;
+		if(isFeasibile()) 
+			System.out.println(solution);
 
 		// When a feasible solution is found, optimize it
 		//optimization();
@@ -90,7 +93,6 @@ public class Parallel implements Runnable{
 						e.setTimeslot(timeslots[i]);
 						toSchedule--;
 						unassigned.remove(e);
-						Collections.sort(unassigned);
 					}
 				}
 			}
@@ -99,7 +101,18 @@ public class Parallel implements Runnable{
 	
 	public void feasibleSol() {
 		while(toSchedule!=0 && (System.nanoTime()-start)<end) {
+			if(n_iteration==)
+				
+			Collections.sort(unassigned);	
 			insertUnassigned();
+			
+			if(toSchedule<prevConflicts) {
+				prevConflicts = toSchedule;
+				n_iteration+=-300;
+				if(toSchedule<5)
+					n_iteration+=-5000;
+			}
+			n_iteration++;
 		}
 	}
 	
@@ -113,7 +126,7 @@ public class Parallel implements Runnable{
 				nConflicts = timeslots[i].getNConflicts(e.getId());
 				TLelement el = new TLelement(e.getId(), timeslots[i].getId());
 				//TODO: ottimizzare per la funzione obiettivo
-				if((nConflicts<minConflict && !feasibleTL.contains(el)) || (toSchedule + nConflicts -1 < prevConflicts)) {
+				if(nConflicts<minConflict && (!feasibleTL.contains(el) || (toSchedule + nConflicts -1) < prevConflicts)) {
 					minConflict = nConflicts;
 					actualTS = timeslots[i];
 				}
@@ -145,33 +158,33 @@ public class Parallel implements Runnable{
 		int id1, id2;
 		
 		do {	
-			id1 = rand.nextInt(n_timeslots+1);
-			id2 = rand.nextInt(n_timeslots+1);
+			id1 = rand.nextInt(n_timeslots);
+			id2 = rand.nextInt(n_timeslots);
 			l1.clear();
 			l2.clear();
-			for(Exam e:timeslots[id1-1].getExams()) {
-				if(!timeslots[id2-1].isConflict(e.getId())) {
+			for(Exam e:timeslots[id1].getExams()) {
+				if(!timeslots[id2].isConflict(e.getId())) {
 					l1.add(e);
-					this.addTLelement(feasibleTL, new TLelement(e.getId(), timeslots[id1-1].getId()));
+					this.addTLelement(feasibleTL, new TLelement(e.getId(), timeslots[id1].getId()));
 				}
 			}
-			for(Exam e:timeslots[id2-1].getExams()) {
-				if(!timeslots[id1-1].isConflict(e.getId())) {
+			for(Exam e:timeslots[id2].getExams()) {
+				if(!timeslots[id1].isConflict(e.getId())) {
 					l2.add(e);
-					this.addTLelement(feasibleTL, new TLelement(e.getId(), timeslots[id2-1].getId()));
+					this.addTLelement(feasibleTL, new TLelement(e.getId(), timeslots[id2].getId()));
 				}
 			}
 		}while(l1.size()!=0 && l2.size()!=0);
 		
 		for(Exam e:l1) {
-			timeslots[id2-1].addExam(e);
-			e.setTimeslot(timeslots[id2-1]);
-			timeslots[id1-1].removeExam(e);
+			timeslots[id2].addExam(e);
+			e.setTimeslot(timeslots[id2]);
+			timeslots[id1].removeExam(e);
 		}
 		for(Exam e:l2) {
-			timeslots[id1-1].addExam(e);
-			e.setTimeslot(timeslots[id1-1]);
-			timeslots[id2-1].removeExam(e);
+			timeslots[id1].addExam(e);
+			e.setTimeslot(timeslots[id1]);
+			timeslots[id2].removeExam(e);
 		}
 		
 		l1.clear();
@@ -182,8 +195,25 @@ public class Parallel implements Runnable{
 		  tl.add(t);
 		  if(tl.size()>TLsize)
 		   tl.remove(0);
-		 }
+	 }
 	
+	public boolean isFeasibile() {
+		for(int i = 0; i < E; ++i) {
+			if(solution[i] < 1 || solution[i] > T) // Invalid timeslot
+				return false;
+			for(int j = 0; j < E; ++j) {
+				if(solution[j] < 1 || solution[j] > T)  // Invalid timeslot
+					return false;
+				if(solution[i] == solution[j] && conflictWeight[i][j] > 0) // Exam in the same timeslot and students in conflict
+					return false;
+			}
+		}
+		return true;
+	}
 	
-
+	private void saveSolution() {
+		for (Exam e : randomExams.values()) {
+			solution[e.getId() - 1] = e.getTimeslot().getId();
+		}
+	}
 }

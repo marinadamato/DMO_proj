@@ -101,25 +101,19 @@ public class Exam implements Comparable<Exam> {
 	}
 	
 	public int compareTo(Exam e) {
-		if(this.getNAvailable()<e.getNAvailable()) {
-			return 1; 
-		}else if(this.getNAvailable()>e.getNAvailable()) {
+		if(this.getConflicts().size()>e.getConflicts().size()) {
+			return 1;
+		}
+		else if(this.getConflicts().size()<e.getConflicts().size()) {
 			return -1;
 		}
 		else {
-			if(this.getConflicts().size()>e.getConflicts().size()) {
+			if(this.getNStudents()>=e.getNStudents()) {
 				return 1;
 			}
-			else if(this.getConflicts().size()<e.getConflicts().size()) {
+			else
 				return -1;
-			}
-			else {
-				if(this.getNStudents()>=e.getNStudents()) {
-					return 1;
-				}
-				else
-					return -1;
-			}
 		}
 	}
+	
 }

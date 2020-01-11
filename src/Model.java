@@ -31,7 +31,7 @@ public class Model {
 		
 		if(penalty<optPenalty) {
 			optPenalty = penalty;
-			this.writeFdile2(solution);
+			//this.writeFdile2(solution);
 			return true;
 		}
 		
