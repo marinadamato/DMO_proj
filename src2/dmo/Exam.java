@@ -2,7 +2,7 @@ package dmo;
 import java.io.IOException;
 import java.util.*;
 
-public class Exam {
+public class Exam implements Comparable<Exam> {
 	private int id;
 	private int nStudents;
 	private Timeslot timeslot;
@@ -10,6 +10,7 @@ public class Exam {
 	private ArrayList<Exam> conflicts = new ArrayList<Exam>();
 	private boolean flagIsChanged = false;
 	private ArrayList<String> students = new ArrayList<String>();
+	private int nAvailableTime;
 	
 	public Exam(int id, int nStudents) {
 		this.id = id;
@@ -85,5 +86,40 @@ public class Exam {
 	
 	public void setStudents(ArrayList<String> students) {
 		this.students = students;
+	}
+	
+	public int getNAvailable() {
+		return this.getNAvailable();
+	}
+	
+	public void incNAvailable() {
+		this.nAvailableTime++;
+	}
+	
+	public void decAvailable() {
+		this.nAvailableTime--;
+	}
+	
+	public int compareTo(Exam e) {
+		if(this.getNAvailable()<e.getNAvailable()) {
+			return 1; 
+		}else if(this.getNAvailable()>e.getNAvailable()) {
+			return -1;
+		}
+		else {
+			if(this.getConflicts().size()>e.getConflicts().size()) {
+				return 1;
+			}
+			else if(this.getConflicts().size()<e.getConflicts().size()) {
+				return -1;
+			}
+			else {
+				if(this.getNStudents()>=e.getNStudents()) {
+					return 1;
+				}
+				else
+					return -1;
+			}
+		}
 	}
 }
