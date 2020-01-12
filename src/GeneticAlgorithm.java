@@ -12,9 +12,9 @@ public class GeneticAlgorithm implements Runnable {
 
 	private Integer[][] population;
 	private Model model;
-	private int n_chrom;
-	private int n_exams;
-	private int n_time_slots;
+	private int nChrom;
+	private int nExams;
+	private int nTimeSlots;
 	private int[][] nEe;
 	private double[] penalty;
 	private Random rand;
@@ -25,38 +25,25 @@ public class GeneticAlgorithm implements Runnable {
 	private List<Integer> sortedExmsToSchedule;
 	private List<Integer> ExmsToSchedule;
 	private TabuSearch ts;
-	private int counter_iteration;
-	private long lastBenchFound;
-	private long tlim;
+	private long lastOptFound;
 	private int minimum_cut;
 
-	public GeneticAlgorithm(Model model, int n_chrom,long tlim) {
+	public GeneticAlgorithm(Model model, int n_chrom) {
 		super();
 		this.model = model;
-		this.n_chrom = n_chrom;
-		this.n_exams = model.getExms().size();
+		this.nChrom = n_chrom;
+		this.nExams = model.getExms().size();
 		this.nEe = model.getnEe();
-		this.population = new Integer[n_chrom][n_exams];
+		this.population = new Integer[n_chrom][nExams];
 		this.penalty = new double[n_chrom];
-		this.n_time_slots = model.getN_timeslots();
+		this.nTimeSlots = model.getN_timeslots();
 		this.rand = new Random();
 		this.ts = new TabuSearch(this.model);
-		this.tlim=tlim;
-		this.minimum_cut=(int) Math.round(this.n_exams * 0.1);
-	}
-
-	public boolean existYet(Integer[] chrom) {
-
-		for (Integer[] c : population)
-			if (Arrays.equals(c, chrom))
-				return true;
-
-		return false;
+		this.minimum_cut=(int) Math.round(this.nExams * 0.1);
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		this.initial_population();
 		double optPenalty = Double.MAX_VALUE;
 
@@ -66,37 +53,88 @@ public class GeneticAlgorithm implements Runnable {
 			
 			// rapporto tra la fitness media e la fitness massima
 			double ratio = (Arrays.stream(this.penalty).min().getAsDouble())
-					/Arrays.stream(this.penalty).average().getAsDouble(); // da teoria libro
-						
+					/Arrays.stream(this.penalty).average().getAsDouble();
 						
 			if (Arrays.stream(this.penalty).min().getAsDouble() < optPenalty) {
-				optPenalty = model.getOptPenalty();
-				lastBenchFound = System.currentTimeMillis();
+				optPenalty = Arrays.stream(this.penalty).min().getAsDouble();
+				lastOptFound = System.currentTimeMillis();
 			}
 
-			if (ratio > 0.997  &&  (System.currentTimeMillis() - lastBenchFound) > (90 * 1000)  ) {// da teoria libro
-				for (int c = 0; c<this.n_chrom/2;c++) { //: getIndexBadChroms()) {
+			if (ratio > 0.997  &&  (System.currentTimeMillis() - lastOptFound) > (25 * 1000)  ) {
+				for (int c=0; c<nChrom; c++) {
 					do {
-						found = false;
+						chromosome = new Integer[this.nExams];
+						chromosome = swapTwoTimeslots(population[c]);
 
-						chromosome = new Integer[this.n_exams];
-						nLoop = 0;
-
-						doRecursive(chromosome, 0, sortedExmsToSchedule.get(0), this.n_exams);
-
-						Collections.swap(sortedExmsToSchedule, 0, c);
-
-					} while (!isFeasible(chromosome) || existYet(chromosome));
+					} while (!isFeasible(chromosome));
 					
 					population[c] = chromosome.clone();
 				}
 				
-				lastBenchFound = Long.MAX_VALUE;
+				minimum_cut = (int) Math.round(this.nExams * 0.1);
+				lastOptFound = System.currentTimeMillis();//Long.MAX_VALUE;
 			}
 		}
 
 	}
+	
+	private Integer[] swapTwoTimeslots(Integer[] chrome) {
+		Integer[] sol = chrome.clone();
+		
+		int timeS1 = rand.nextInt(this.nTimeSlots)+1;
+		int timeS2 = rand.nextInt(this.nTimeSlots)+1;
 
+		List<String> exm2 = new ArrayList<>();
+		List<String> exm1 = new ArrayList<>();
+		
+		for(int i =0; i<this.nExams; i++) 
+			if(sol[i]==timeS1)
+				exm1.add(String.valueOf(i));
+		
+		for(int i =0; i<this.nExams; i++) 
+			if(sol[i]==timeS2)
+				exm2.add(String.valueOf(i));
+		
+		for(String e : exm1)
+			sol[Integer.valueOf(e)] = timeS2;
+		
+		for(String e : exm2)
+			sol[Integer.valueOf(e)] = timeS1;	
+		
+		return sol;
+		
+	}
+	
+	private void initial_population() {
+		this.getSortedExmToScheduleByNumStudent();
+		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
+
+		for (int c = 0; c < nChrom; c++) {
+			do {
+				found = false;
+
+				chromosome = new Integer[this.nExams];
+				nLoop = 0;
+
+				doRecursive(chromosome, 0, sortedExmsToSchedule.get(0), this.nExams);
+
+				Collections.swap(sortedExmsToSchedule, 0, c);
+
+			} while (!isFeasible(chromosome) || existYet(chromosome));
+			
+			
+			if(model.isNewOpt(chromosome)) {
+
+				Thread current = Thread.currentThread();
+				System.out.println("Found by " + current.getName());
+			}
+				
+			
+			population[c] = chromosome.clone();
+		}
+
+	} 
+	
 	/**
 	 * Sort Exams by the number of students enrolled it, to try to assign exams
 	 * first with the biggest average of student in conflict
@@ -105,7 +143,7 @@ public class GeneticAlgorithm implements Runnable {
 	private void getSortedExmToScheduleByNumStudent() {
 		HashMap<Integer, Double> exmStuds = new HashMap<Integer, Double>();
 
-		for (int i = 0; i < this.n_exams; i++)
+		for (int i = 0; i < this.nExams; i++)
 			exmStuds.put(i, (double) Arrays.stream(nEe[i]).filter(c -> c > 0).count());// Arrays.stream(nEe[i]).average().getAsDouble());
 
 		this.ExmsToSchedule = exmStuds.entrySet().stream()
@@ -113,33 +151,6 @@ public class GeneticAlgorithm implements Runnable {
 				.collect(Collectors.toList());
 
 		this.ExmsToSchedule.add(-1);
-
-	}
-	
-	private void initial_population() {
-		this.getSortedExmToScheduleByNumStudent();
-		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
-
-		for (int c = 0; c < n_chrom; c++) {
-			do {
-				found = false;
-
-				chromosome = new Integer[this.n_exams];
-				nLoop = 0;
-
-				doRecursive(chromosome, 0, sortedExmsToSchedule.get(0), this.n_exams);
-
-				Collections.swap(sortedExmsToSchedule, 0, c);
-				// per generare soluzioni il più possibili diverse dopo la creazione
-				// di una soluzine inverto l'ordine di due esami
-
-			} while (!isFeasible(chromosome) || existYet(chromosome));
-			
-			
-			model.isNewOpt(chromosome);
-			
-			population[c] = chromosome.clone();
-		}
 
 	}
 
@@ -184,7 +195,7 @@ public class GeneticAlgorithm implements Runnable {
 				if (!found)
 					nLoop++; // every time i fail a complete for cycle
 
-				if (nLoop > n_exams/2 && !found) {
+				if (nLoop > nExams/2 && !found) {
 					returnBack = (int) (step * Math.random());
 					nLoop = 0;
 				}
@@ -211,10 +222,10 @@ public class GeneticAlgorithm implements Runnable {
 		List<Integer> path;
 		HashMap<Integer, Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 
-		for (int k = 1; k <= this.n_time_slots; k++)
+		for (int k = 1; k <= this.nTimeSlots; k++)
 			numStudentTimeSlot.put(k, 0);
 
-		for (int i = 0; i < this.n_exams; i++) {
+		for (int i = 0; i < this.nExams; i++) {
 			if (chrom[i] != null) {
 				int numStud = (numStudentTimeSlot.get(chrom[i]) + model.getExms().get(i).getNumber_st_enr());
 				numStudentTimeSlot.replace(chrom[i], numStud);
@@ -236,7 +247,7 @@ public class GeneticAlgorithm implements Runnable {
 	 */
 	private void calculatePenaltyPop() {
 
-		for (int c = 0; c < n_chrom; c++) { // For each chroms
+		for (int c = 0; c < nChrom; c++) { // For each chroms
 			this.penalty[c] = model.computePenalty(population[c]);
 		}
 	}
@@ -244,23 +255,23 @@ public class GeneticAlgorithm implements Runnable {
 	private void crossover() {
 		int crossingSecStart ;
 		int crossingSecEnd ;
-		Integer[] parent = new Integer[n_exams];
-		Integer[] child = new Integer[n_exams];
+		Integer[] parent = new Integer[nExams];
+		Integer[] child = new Integer[nExams];
 		int indWorstParent = 0; double worstValuePop = Double.MIN_VALUE;
 
 		// Search the two worst fitness in my population
-		for (int i = 0; i < this.n_chrom; i++) {
+		for (int i = 0; i < this.nChrom; i++) {
 			if (penalty[i] > worstValuePop) {
 				worstValuePop = penalty[i];
 				indWorstParent = i;
 			}
 		}
 		
-		parent = population[rand.nextInt(n_chrom)].clone();
+		parent = population[rand.nextInt(nChrom)].clone();
 
 		// Calculate a random crossing section
-		crossingSecStart = rand.nextInt(n_exams- this.minimum_cut);
-		crossingSecEnd = (int) (rand.nextInt(n_exams - crossingSecStart ) +crossingSecStart);
+		crossingSecStart = rand.nextInt(nExams- this.minimum_cut);
+		crossingSecEnd = (int) (rand.nextInt(nExams - crossingSecStart ) +crossingSecStart);
 		
 		// copy crossing section two chromosome
 		for (int i = crossingSecStart; i <= crossingSecEnd; i++) 
@@ -271,15 +282,15 @@ public class GeneticAlgorithm implements Runnable {
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
 		
 		do {
-			int numExamsNotAssignedYet = (this.n_exams - (crossingSecEnd + 1 - crossingSecStart));
+			int numExamsNotAssignedYet = (this.nExams - (crossingSecEnd + 1 - crossingSecStart));
 			found = false;
-			chromosome = new Integer[this.n_exams];
+			chromosome = new Integer[this.nExams];
 			nLoop = 0;
 
 			doRecursive(child, 0, sortedExmsToSchedule.get(0), numExamsNotAssignedYet);
 			Collections.swap(sortedExmsToSchedule, 0, k++);
 
-			if (k > this.n_exams) { 
+			if (k > this.nExams) { 
 				return;
 			}
 			
@@ -291,9 +302,18 @@ public class GeneticAlgorithm implements Runnable {
 			population[indWorstParent] = child.clone();
 
 	}
+	
+	public boolean existYet(Integer[] chrom) {
+
+		for (Integer[] c : population)
+			if (Arrays.equals(c, chrom))
+				return true;
+
+		return false;
+	}
 
 	private boolean isFeasible(Integer[] chrom) {
-		for (int e = 0; e < this.n_exams; e++) {
+		for (int e = 0; e < this.nExams; e++) {
 			if (chrom[e] == null || model.areConflictual(chrom[e], e, chrom))
 				return false;
 		}

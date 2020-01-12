@@ -5,20 +5,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 public class Model {
 
+	private static final int CHROM_NUMBER = 8;
+	private static final int THREADS_NUMBER = 3;
+	
 	private int n_timeslots;
-	private int THREADS_NUMBER = 3;
 	private int[][] nEe;
 	private HashMap<Integer, Exam> exms;
 	private HashSet<String> studs;
-	long timeStart;
+	private long timeStart;
 	private String path;
 	private double optPenalty;
 	public boolean old_flag;
-	public List<Integer[]> minLoc;
+	private List<Integer[]> minLoc;
+	private Integer[] optSolution;
 
 	public Model() {
 		super();
@@ -30,59 +32,129 @@ public class Model {
 		this.minLoc = new ArrayList<Integer[]>();
 	}
 	
-	public boolean isNewOpt(Integer[] solution) {
-		double penalty = computePenalty(solution);
-		
-		if(penalty<optPenalty) {
-			optPenalty = penalty;
-			this.writeFdile2(solution);
-			//System.out.println( "Time: " + (System.currentTimeMillis() - this.timeStart) / 1000
-			//		+ "s - Optimal: "+optPenalty+"\n");
-			return true;
-		}
-		
-		return false;
-	}
-	
-	public double getOptPenalty() {
-		return this.optPenalty;
-	}
-	
-	
-	/*public void runGA(int tlim) {
-		// Per definire numero cromosomi? valuto difficoltà di una istanza in base al rapporto tra media conflitti esame e timeslot,
-		// più è alto il rapporto, maggiore è la difficoltà nel posizionare gli esami
+	public void runGA() {
 		int count = 0;
 		
 		for (int i = 0; i < this.exms.size(); i++) 
 			for (int j = i + 1; j < this.exms.size(); j++) 
 				if(nEe[i][j] > 0)
 					count += 1;
-		//System.out.println((double) count/(this.exms.size()*this.n_timeslots)); 
+		
 		double difficultInstance = (double) count/(this.exms.size()*this.n_timeslots);
-		int nChroms = (int) ((int) 9/difficultInstance); 
+		int dimPopulation = (int) ((int) CHROM_NUMBER/difficultInstance); 
 		
-		System.out.println("Number Chrom: "+nChroms);
+		if(dimPopulation<4)
+			dimPopulation = 4;
 		
-		
-		GeneticAlgorithm ga = new GeneticAlgorithm(this, nChroms,tlim); // quanti cromosomi sarebbe meglio utilizzare??
-		ga.fit_predict();
-	}*/
+		/*
+		 * Threads creation
+		 */
+		boolean[] threadTaken = new boolean[THREADS_NUMBER];
+		GeneticAlgorithm[] generators = new GeneticAlgorithm[THREADS_NUMBER];
+		Thread t[] = new Thread[THREADS_NUMBER];
 
-	public int getN_timeslots() {
+		for(int i = 0; i < THREADS_NUMBER; ++i) {
+			generators[i] = new GeneticAlgorithm(this, dimPopulation+i);
+			t[i] = new Thread(generators[i]);
+			t[i].start();
+			threadTaken[i] = false;
+		}	
+	
+	}
+	
+	public synchronized boolean isNewOpt(Integer[] solution) {
+		double penalty = computePenalty(solution);
+		optSolution = solution.clone();
+		
+		if(penalty<optPenalty) {
+			optPenalty = penalty;
+			this.writeFdile2(solution);
+			System.out.println( "\nTime: " + (System.currentTimeMillis() - this.timeStart) / 1000
+					+ "s - Optimal: "+optPenalty);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public synchronized double computePenalty(Integer[] solution) {
+		int dist;
+		double penalty = 0;
+
+		for (int i = 0; i < this.exms.size(); i++) {
+			for (int j = i + 1; j < this.exms.size(); j++) {
+				dist = Math.abs(solution[i] - solution[j]);
+				if (dist <= 5)
+					penalty += (Math.pow(2, 5 - dist) * nEe[i][j]);
+			}
+		}
+
+		penalty = penalty / studs.size();
+
+		return penalty;
+	}
+	
+	// uno dei dei principali problemi del tabusearch iniziale era che risultava
+	// lentissimo. Per ogni iterazione si andava
+	// a calcolare la penalità dell'intera soluzione (n-esami*timeslot volte). Per
+	// ridurre il carico, ora mi
+	// vado a calcolare solo la penalità generata dal un singolo esame
+	public synchronized double computePenaltyByExam(Integer[] chrom, int exam) {
+		int dist;
+		double penalty = 0;
+
+		for (int i = 0; i < this.exms.size(); i++) {
+			if (exam != i) {
+				dist = Math.abs(chrom[exam] - chrom[i]);
+				if (dist <= 5)
+					penalty += (Math.pow(2, 5 - dist) * this.nEe[exam][i]);
+			}
+		}
+
+		return penalty / getStuds();
+	}
+	
+	public synchronized boolean areConflictual(int time_slot, int exam_id, Integer[] chrom) {
+		for (int e = 0; e < this.exms.size(); e++) {
+			if (e != exam_id && chrom[e] != null) {
+				if (chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public synchronized void addMinLoc(Integer[] clone) {
+		minLoc.add(clone);
+	}
+	
+	public synchronized double getOptPenalty() {
+		return this.optPenalty;
+	}
+	
+	public synchronized Integer[] getOptSolution() {
+		return this.optSolution;
+	}
+
+	public synchronized int getN_timeslots() {
 		return this.n_timeslots;
 	}
 
-	public int[][] getnEe() {
+	public synchronized int[][] getnEe() {
 		return this.nEe;
 	}
 
-	public HashMap<Integer, Exam> getExms() {
+	public synchronized HashMap<Integer, Exam> getExms() {
 		return this.exms;
 	}
 
-	public HashSet<String> getStuds() {
-		return this.studs;
+	public synchronized int getStuds() {
+		return this.studs.size();
+	}
+	
+	public synchronized List<Integer[]> getMinLoc() {
+		return minLoc;
 	}
 
 	public void loadIstance(String path) {
@@ -153,13 +225,12 @@ public class Model {
 					if (!exms.get(idE).getStudents().contains(idS) && exms.containsKey(idE)) {
 						studs.add(idS);
 						exms.get(idE).addStudent(idS);
-					} else
-						throw new IOException();
+					} else throw new IOException();
 				}
 			}
 			br_stu.close();
+			
 			return true;
-
 		} catch (IOException e) {
 			System.err.println("Errore nella lettura del file stu");
 			return false;
@@ -185,102 +256,7 @@ public class Model {
 			}
 		}
 
-		/*
-		 * for (int[] row : nEe) // converting each row as string // and then printing
-		 * in a separate line System.out.println(Arrays.toString(row));
-		 */
-
 		return nEe;
-	}
-	
-	public Integer[] swapTimeslot(Integer[] sol) {
-		Random rand = new Random();
-		Integer[] test;
-		Integer[] bestSol = sol.clone();
-		double bestPenalty = Double.MAX_VALUE;
-
-		//int timeS1 = rand.nextInt(this.n_timeslots)+1;
-		
-		for(int timeS1 =1; timeS1<=this.n_timeslots; timeS1++) {
-			List<String> exm1 = new ArrayList<>();
-			
-			for(int i =0; i<this.exms.size(); i++) {
-				if(sol[i]==timeS1)
-					exm1.add(String.valueOf(i));
-			}
-			
-			for(int timeS2 = 1; timeS2<=this.n_timeslots; timeS2++) {
-	
-				test = sol.clone();
-				if(timeS2 != timeS1) {
-					List<String> exm2 = new ArrayList<>();
-					
-					for(int i =0; i<this.exms.size(); i++) {
-						if(sol[i]==timeS2)
-							exm2.add(String.valueOf(i));
-					}
-					
-					List<String> exmSwap1 = new ArrayList<>(exm1);
-					List<String> exmSwap2 = new ArrayList<>(exm2);
-					
-					for(String e : new ArrayList<>(exm1))
-						for(String e2 : exm2)
-							if(this.nEe[Integer.valueOf(e)][Integer.valueOf(e2)] > 0) {
-								exmSwap1.remove(e);
-								break;
-							}
-					
-					for(String e2 : new ArrayList<>(exm2))
-						for(String e : exm1)
-							if(this.nEe[Integer.valueOf(e2)][Integer.valueOf(e)] > 0) {
-								exmSwap2.remove(e2);
-								break;
-							}
-					
-					for(String e : exm1)
-						test[Integer.valueOf(e)] = timeS2;
-					
-					for(String e : exm2)
-						test[Integer.valueOf(e)] = timeS1;	
-					
-					if(computePenalty(test)<bestPenalty) {
-						bestSol = test.clone();
-						bestPenalty = computePenalty(test);
-					}
-				}
-			}
-		}
-		
-		return bestSol;			
-		
-	}
-
-	public double computePenalty(Integer[] solution) {
-		int dist;
-		double penalty = 0;
-
-		for (int i = 0; i < this.exms.size(); i++) {
-			for (int j = i + 1; j < this.exms.size(); j++) {
-				dist = Math.abs(solution[i] - solution[j]);
-				if (dist <= 5)
-					penalty += (Math.pow(2, 5 - dist) * nEe[i][j]);
-			}
-		}
-
-		penalty = penalty / studs.size();
-
-		return penalty;
-	}
-	
-	public boolean areConflictual(int time_slot, int exam_id, Integer[] chrom) {
-		for (int e = 0; e < this.exms.size(); e++) {
-			if (e != exam_id && chrom[e] != null) {
-				if (chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	public void writeFdile(Integer[] sol) {
@@ -299,7 +275,7 @@ public class Model {
 	}
 	
 	// to eliminate before sending the code to Manerba
-	public void writeFdile2(Integer[] sol) {
+	public synchronized void writeFdile2(Integer[] sol) {
 		File file = new File(this.path+"_DMOgroup16.sol");
 		
 		double old_pen=200;
@@ -326,72 +302,5 @@ public class Model {
 			}
 		}
 	}
-	
-	public List<Integer> getBadTimeSlot(Integer[] chrom) {
-		List<Integer> path;
-		HashMap<Integer, Integer> numStudentTimeSlot = new HashMap<Integer, Integer>();
 
-		for (int k = 1; k <= this.n_timeslots; k++) {
-			int count = 0;
-			
-			for(int i = 0; i < this.exms.size(); i++)
-				if(chrom[i] == k)
-					count++;
-			
-			numStudentTimeSlot.put(k, count);
-			/*int dist;
-			double penalty = 0;
-
-			for (int i = 0; i < this.exms.size(); i++) {
-				for (int j = 0; j < this.exms.size(); j++) {
-					dist = Math.abs(chrom[i] - chrom[j]);
-					if (dist <= 5 && dist>0) 
-						penalty += (Math.pow(2, 5 - dist) * nEe[i][j]);
-				}
-				
-				if(numStudentTimeSlot.containsKey(chrom[i])) {
-					double p = (numStudentTimeSlot.get(chrom[i]) + penalty);
-					numStudentTimeSlot.replace(chrom[i], p);
-				} else
-					numStudentTimeSlot.put(chrom[i], penalty);
-				
-				penalty = 0;
-			} */
-		}
-
-		path = numStudentTimeSlot.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-				.map(Map.Entry::getKey).collect(Collectors.toList());
-
-		return path;
-	}
-
-	public void runGA(long tlim) {
-		// Per definire numero cromosomi? valuto difficoltà di una istanza in base al rapporto tra media conflitti esame e timeslot,
-		// più è alto il rapporto, maggiore è la difficoltà nel posizionare gli esami
-		int count = 0;
-		
-		for (int i = 0; i < this.exms.size(); i++) 
-			for (int j = i + 1; j < this.exms.size(); j++) 
-				if(nEe[i][j] > 0)
-					count += 1;
-		//System.out.println((double) count/(this.exms.size()*this.n_timeslots)); 
-		double difficultInstance = (double) count/(this.exms.size()*this.n_timeslots);
-		int nChroms = (int) ((int) 9/difficultInstance); 
-		/*
-		 * Threads creation
-		 */
-		boolean[] threadTaken = new boolean[THREADS_NUMBER];
-		GeneticAlgorithm[] generators = new GeneticAlgorithm[THREADS_NUMBER];
-		Thread t[] = new Thread[THREADS_NUMBER];
-
-		for(int i = 0; i < THREADS_NUMBER; ++i) {
-			generators[i] = new GeneticAlgorithm(this, nChroms, tlim);
-			t[i] = new Thread(generators[i]);
-			t[i].start();
-			threadTaken[i] = false;
-		}
-		
-		
-	
-	}
 }
