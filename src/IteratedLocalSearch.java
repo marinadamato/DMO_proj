@@ -86,9 +86,6 @@ public class IteratedLocalSearch {
 					// if the difference between the two penalty (the new one and the old one) is bigger than
 					// the best previous solution
 					if ((actualPenalty - newPenalty) > bestPenalty ) {
-						// checking if is a TabuMove OR
-						// if, even is a TabuMove, it gives a better solution than the one previously generated 
-						double penalty = model.computePenalty(newSol);
 						bestPenalty = (actualPenalty - newPenalty);
 						bestSol = newSol.clone();
 

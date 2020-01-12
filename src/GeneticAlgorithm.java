@@ -336,32 +336,5 @@ public class GeneticAlgorithm implements Runnable {
 
 		return true;
 	}
-	
-	/**
-	 * Print population chromosomes
-	 */
-
-	private void printPopulation() {
-		int count = 1;
-		System.out.println("Population: ");
-		for (Integer[] chrom : population) {
-			System.out.println("Chrom " + count + ": " + Arrays.toString(chrom));
-			count++;
-		}
-	}
-	
-	/**
-	 * Print population penalties
-	 */
-
-	private void printPenaltyPop() {
-
-		System.out.println("Penalties: ");
-		int i = 0;
-		for (Double b : penalty) {
-			System.out.println("Penalty" + (i++) + ": " + b);
-		}
-	}
-
 
 }
