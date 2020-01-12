@@ -12,7 +12,7 @@ public class Model {
 	private static final int THREADS_NUMBER = 3;
 	
 	private int n_timeslots;
-	private int[][] nEe;
+	private int[][] conflictMatrix;
 	private HashMap<Integer, Exam> exms;
 	private HashSet<String> studs;
 	private long timeStart;
@@ -20,24 +20,23 @@ public class Model {
 	private double optPenalty;
 	public boolean old_flag;
 	private List<Integer[]> minLoc;
-	private Integer[] optSolution;
 
-	public Model() {
+	public Model(long timeStart) {
 		super();
-		this.timeStart = System.currentTimeMillis();
 		exms = new HashMap<Integer, Exam>();
 		studs = new HashSet<String>();
 		this.optPenalty = Double.MAX_VALUE;
 		this.old_flag=false;
+		this.timeStart = timeStart;
 		this.minLoc = new ArrayList<Integer[]>();
 	}
 	
-	public void runGA() {
+	public void run() {
 		int count = 0;
 		
 		for (int i = 0; i < this.exms.size(); i++) 
 			for (int j = i + 1; j < this.exms.size(); j++) 
-				if(nEe[i][j] > 0)
+				if(conflictMatrix[i][j] > 0)
 					count += 1;
 		
 		double difficultInstance = (double) count/(this.exms.size()*this.n_timeslots);
@@ -54,7 +53,7 @@ public class Model {
 		Thread t[] = new Thread[THREADS_NUMBER];
 
 		for(int i = 0; i < THREADS_NUMBER; ++i) {
-			generators[i] = new GeneticAlgorithm(this, dimPopulation+i);
+			generators[i] = new GeneticAlgorithm(this, dimPopulation);
 			t[i] = new Thread(generators[i]);
 			t[i].start();
 			threadTaken[i] = false;
@@ -64,7 +63,6 @@ public class Model {
 	
 	public synchronized boolean isNewOpt(Integer[] solution) {
 		double penalty = computePenalty(solution);
-		optSolution = solution.clone();
 		
 		if(penalty<optPenalty) {
 			optPenalty = penalty;
@@ -85,7 +83,7 @@ public class Model {
 			for (int j = i + 1; j < this.exms.size(); j++) {
 				dist = Math.abs(solution[i] - solution[j]);
 				if (dist <= 5)
-					penalty += (Math.pow(2, 5 - dist) * nEe[i][j]);
+					penalty += (Math.pow(2, 5 - dist) * conflictMatrix[i][j]);
 			}
 		}
 
@@ -107,7 +105,7 @@ public class Model {
 			if (exam != i) {
 				dist = Math.abs(chrom[exam] - chrom[i]);
 				if (dist <= 5)
-					penalty += (Math.pow(2, 5 - dist) * this.nEe[exam][i]);
+					penalty += (Math.pow(2, 5 - dist) * this.conflictMatrix[exam][i]);
 			}
 		}
 
@@ -117,7 +115,7 @@ public class Model {
 	public synchronized boolean areConflictual(int time_slot, int exam_id, Integer[] chrom) {
 		for (int e = 0; e < this.exms.size(); e++) {
 			if (e != exam_id && chrom[e] != null) {
-				if (chrom[e] == time_slot && this.nEe[e][exam_id] != 0) {
+				if (chrom[e] == time_slot && this.conflictMatrix[e][exam_id] != 0) {
 					return true;
 				}
 			}
@@ -132,17 +130,14 @@ public class Model {
 	public synchronized double getOptPenalty() {
 		return this.optPenalty;
 	}
-	
-	public synchronized Integer[] getOptSolution() {
-		return this.optSolution;
-	}
+
 
 	public synchronized int getN_timeslots() {
 		return this.n_timeslots;
 	}
 
-	public synchronized int[][] getnEe() {
-		return this.nEe;
+	public synchronized int[][] getConflictMatrix() {
+		return this.conflictMatrix;
 	}
 
 	public synchronized HashMap<Integer, Exam> getExms() {
@@ -162,7 +157,7 @@ public class Model {
 		this.loadSlo(path+".slo");
 		this.loadExm(path+".exm");
 		this.loadStu(path+".stu");
-		this.buildNeEMatrix();
+		this.buildConflictMatrix();
 	}
 	
 	private boolean loadSlo(String file) {
@@ -237,9 +232,9 @@ public class Model {
 		}
 	}
 
-	private int[][] buildNeEMatrix() {
+	private int[][] buildConflictMatrix() {
 
-		this.nEe = new int[exms.size()][exms.size()];
+		this.conflictMatrix = new int[exms.size()][exms.size()];
 		ArrayList<String> eList, EList;
 
 		for (Entry<Integer, Exam> entryExam1 : exms.entrySet()) {
@@ -249,14 +244,14 @@ public class Model {
 					EList = new ArrayList<>(entryExam2.getValue().getStudents());
 					eList.retainAll(EList);
 
-					nEe[entryExam1.getKey()][entryExam2.getKey()] = eList.size();
+					conflictMatrix[entryExam1.getKey()][entryExam2.getKey()] = eList.size();
 				} else
-					nEe[entryExam1.getKey()][entryExam2.getKey()] = Integer.MAX_VALUE;
+					conflictMatrix[entryExam1.getKey()][entryExam2.getKey()] = Integer.MAX_VALUE;
 
 			}
 		}
 
-		return nEe;
+		return conflictMatrix;
 	}
 
 	public void writeFdile(Integer[] sol) {

@@ -7,15 +7,15 @@ public class TabuSearch {
 	private Model model;
 	private int n_exams;
 	private int n_timeslots;
-	private int avgTimeSlotNotConflictual;
+	private int dimTabuList;
 	private double optPenaltyLocal = Double.MAX_VALUE;
-	private int[][] nEe;
+	private int[][] conflictMatrix;
 
 	public TabuSearch(Model model) {
 		this.model = model;
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
-		this.nEe= model.getnEe();
+		this.conflictMatrix= model.getConflictMatrix();
 	}
 	
 	// metodo che richiamo nel crossover
@@ -23,7 +23,7 @@ public class TabuSearch {
 		tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
-		avgTimeSlotNotConflictual = getAvgTimeSlotNotConflictual(chrom); // valore che mi serve per definire la
+		dimTabuList = getDimTabuList(chrom); // valore che mi serve per definire la
 																			// dimensione della tabulist
 		Integer[] optSolution = chrom;
 		Integer[] newSolution;
@@ -42,7 +42,7 @@ public class TabuSearch {
 			// ad esplorarla ancora
 			// (valore da testare meglio, magari basta anche un centesimo)
 
-			if ((currentPenalty - newPenalty) > 0.0005) {// !Arrays.equals(solution,bestSol) && !isMinLocalYet(bestSol)){
+			if ((currentPenalty - newPenalty) > 0.0005) {
 				currentPenalty = newPenalty;
 				currentSolution = newSolution.clone();
 
@@ -129,7 +129,7 @@ public class TabuSearch {
 		// mosse. Siccome potrebbe essere troppo grande, nel calcolo della media, ho
 		// diminuito di 1 la media trovata.
 		// Comunque anche questo va testato
-		if (tabulist.size() > this.n_exams * this.avgTimeSlotNotConflictual)
+		if (tabulist.size() > this.dimTabuList)
 			tabulist.remove(0);
 
 		return bestSol;
@@ -173,14 +173,14 @@ public class TabuSearch {
 					
 					for(String e : new ArrayList<>(exm1))
 						for(String e2 : exm2)
-							if(this.nEe[Integer.valueOf(e)][Integer.valueOf(e2)] > 0) {
+							if(this.conflictMatrix[Integer.valueOf(e)][Integer.valueOf(e2)] > 0) {
 								exmSwap1.add(e);
 								break;
 							}
 					
 					for(String e : new ArrayList<>(exm2))
 						for(String e1 : exm1)
-							if(this.nEe[Integer.valueOf(e)][Integer.valueOf(e1)] > 0 ) {
+							if(this.conflictMatrix[Integer.valueOf(e)][Integer.valueOf(e1)] > 0 ) {
 								exmSwap2.add(e);
 								break;
 							}
@@ -207,7 +207,7 @@ public class TabuSearch {
 	// timeslot ancora possibili
 	// per ogni esami, non so se ha senso (va testato) ma mi serve per definire
 	// dimensione tabulist
-	private int getAvgTimeSlotNotConflictual(Integer[] chrom) {
+	private int getDimTabuList(Integer[] chrom) {
 		int notConflictual = 0;
 
 		for (int e1 = 0; e1 < n_exams; e1++) {
@@ -216,7 +216,7 @@ public class TabuSearch {
 					notConflictual++;
 
 		}
-		return notConflictual / this.n_exams;
+		return (notConflictual - this.n_exams);
 	}
 	
 

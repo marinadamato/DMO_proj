@@ -15,7 +15,7 @@ public class GeneticAlgorithm implements Runnable {
 	private int nChrom;
 	private int nExams;
 	private int nTimeSlots;
-	private int[][] nEe;
+	private int[][] conflictMatrix;
 	private double[] penalty;
 	private Random rand;
 	private boolean found;
@@ -33,7 +33,7 @@ public class GeneticAlgorithm implements Runnable {
 		this.model = model;
 		this.nChrom = n_chrom;
 		this.nExams = model.getExms().size();
-		this.nEe = model.getnEe();
+		this.conflictMatrix = model.getConflictMatrix();
 		this.population = new Integer[n_chrom][nExams];
 		this.penalty = new double[n_chrom];
 		this.nTimeSlots = model.getN_timeslots();
@@ -51,7 +51,7 @@ public class GeneticAlgorithm implements Runnable {
 			this.crossover();
 			this.calculatePenaltyPop();
 			
-			// rapporto tra la fitness media e la fitness massima
+			// rapporto tra la penali media e la fitness massima
 			double ratio = (Arrays.stream(this.penalty).min().getAsDouble())
 					/Arrays.stream(this.penalty).average().getAsDouble();
 						
@@ -106,7 +106,7 @@ public class GeneticAlgorithm implements Runnable {
 	}
 	
 	private void initial_population() {
-		this.getSortedExmToScheduleByNumStudent();
+		this.getSortedExmToScheduleByNumConflict();
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
 
 		for (int c = 0; c < nChrom; c++) {
@@ -115,10 +115,10 @@ public class GeneticAlgorithm implements Runnable {
 
 				chromosome = new Integer[this.nExams];
 				nLoop = 0;
-
+				
+				Collections.swap(sortedExmsToSchedule, 0, c);
 				doRecursive(chromosome, 0, sortedExmsToSchedule.get(0), this.nExams);
 
-				Collections.swap(sortedExmsToSchedule, 0, c);
 
 			} while (!isFeasible(chromosome) || existYet(chromosome));
 			
@@ -136,15 +136,15 @@ public class GeneticAlgorithm implements Runnable {
 	} 
 	
 	/**
-	 * Sort Exams by the number of students enrolled it, to try to assign exams
-	 * first with the biggest average of student in conflict
+	 * Sort Exams by the number of conflicts, to try to assign exams
+	 * first with the biggest number of conflicts
 	 * 
 	 */
-	private void getSortedExmToScheduleByNumStudent() {
-		HashMap<Integer, Double> exmStuds = new HashMap<Integer, Double>();
+	private void getSortedExmToScheduleByNumConflict() {
+		HashMap<Integer, Integer> exmStuds = new HashMap<Integer, Integer>();
 
 		for (int i = 0; i < this.nExams; i++)
-			exmStuds.put(i, (double) Arrays.stream(nEe[i]).filter(c -> c > 0).count());// Arrays.stream(nEe[i]).average().getAsDouble());
+			exmStuds.put(i, (int) Arrays.stream(conflictMatrix[i]).filter(c -> c > 0).count());
 
 		this.ExmsToSchedule = exmStuds.entrySet().stream()
 				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).map(Map.Entry::getKey)
@@ -259,7 +259,7 @@ public class GeneticAlgorithm implements Runnable {
 		Integer[] child = new Integer[nExams];
 		int indWorstParent = 0; double worstValuePop = Double.MIN_VALUE;
 
-		// Search the two worst fitness in my population
+		// Search the worst fitness in my population
 		for (int i = 0; i < this.nChrom; i++) {
 			if (penalty[i] > worstValuePop) {
 				worstValuePop = penalty[i];
