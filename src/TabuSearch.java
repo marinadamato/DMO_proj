@@ -18,29 +18,26 @@ public class TabuSearch {
 		this.conflictMatrix= model.getConflictMatrix();
 	}
 	
-	// metodo che richiamo nel crossover
+	// called method in crossover
 	public Integer[] run(Integer[] chrom) {
 		tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
-		dimTabuList = getDimTabuList(chrom); // valore che mi serve per definire la
-																			// dimensione della tabulist
+		dimTabuList = getDimTabuList(chrom); // value used to set TabuList dimension 
+																			
 		Integer[] optSolution = chrom;
 		Integer[] newSolution;
 		Integer[] currentSolution;
 
-		currentSolution = chrom; // soluzione che gli passo dal crossover
+		currentSolution = chrom; // solution passed from crossover
 		currentPenalty = model.computePenalty(currentSolution);
 		optPenaltyLocal = currentPenalty;
 
 		do {
-			newSolution = generateNeigh(currentSolution); // mi genero il vicinato
+			newSolution = generateNeigh(currentSolution); // generating neighborhood
 			newPenalty = model.computePenalty(newSolution);
-
-			// se la penalità tra la mia vecchia soluzione e quella nuova è migliorata di
-			// almeno un millesimo della penalità della mia soluzione "più ottima", procedo
-			// ad esplorarla ancora
-			// (valore da testare meglio, magari basta anche un centesimo)
+			
+			//if the penalty from old solution to the new one has improved of at least a thousandth of the my optimal old solution, the new one is explored again  
 
 			if ((currentPenalty - newPenalty) > 0.0005) {
 				currentPenalty = newPenalty;
@@ -72,30 +69,30 @@ public class TabuSearch {
 		return optSolution;
 	}
 
-	// genero il vicinato
+	/*
+	 * Generating the neighborhood of a given chromosome
+	 */
 	public Integer[] generateNeigh(Integer[] chrom) {
 		double bestPenalty = 0;
 		double newPenalty;
 		double actualPenalty;
-		TLelement tl = new TLelement(-1, -1); // inizializzo elemento della tabù list;
+		TLelement tl = new TLelement(-1, -1); // initializing element of TabuList
 		Integer[] bestSol = chrom.clone();
 		
-		for (int e = 0; e < this.n_exams; e++) { // per ogni exam
+		for (int e = 0; e < this.n_exams; e++) { // for every exam
 			Integer[] newSol = chrom.clone();
-			actualPenalty = model.computePenaltyByExam(chrom, e); // calcolo peso-penalità dell'esame e
+			actualPenalty = model.computePenaltyByExam(chrom, e); // computing weight-penalty for exam e
 
-			for (int i = 1; i <= this.n_timeslots; i++) { // per ogni time slot
-				if (!model.areConflictual(i, e, newSol) && i != chrom[e]) { // controllo se posso inserire il timeslot in e
+			for (int i = 1; i <= this.n_timeslots; i++) { // for every time-slot
+				if (!model.areConflictual(i, e, newSol) && i != chrom[e]) { // checking if time-slot is feasible
 					newSol[e] = i;
-					newPenalty = model.computePenaltyByExam(newSol, e); // calcolo il peso-penalità con il nuovo timeslot
+					newPenalty = model.computePenaltyByExam(newSol, e); //computing weight-penalty with the new exam
 
-					// se la differenza tra le due penalità (nuova e vecchia) è maggiore della
-					// precende soluzione
-					// migliore
+					// if the difference between the two penalty (the new one and the old one) is bigger than
+					// the best previous solution
 					if ((actualPenalty - newPenalty) > bestPenalty ) {
-						// controllo se è una mossa tabu o se anche tabu, mi genera una soluzione
-						// migliore di tutte
-						// quelle trovate in precedenza
+						// checking if is a TabuMove OR
+						// if, even is a TabuMove, it gives a better solution than the one previously generated 
 						double penalty = model.computePenalty(newSol);
 						if (!tabulist.contains(new TLelement(e, i))
 								|| (tabulist.contains(new TLelement(e, i)) && penalty < optPenaltyLocal)) {
@@ -112,29 +109,23 @@ public class TabuSearch {
 			}
 		}
 
-		// una volta visitato tutti gli esami, provati tutti i timeslot e trovato la
-		// mossa che mi restituisce una
-		// variazione di penalità migliore, salvo la mossa
+		// Once all exams have been visited, all time-slots have been tried,
+		// and the move giving the best penalty variation has been found 
+		// the move is saved
 		if (tl.getE() > -1)
 			tabulist.add(tl);
 
-		// se la tabulist ha una dimensione superiore al numero di esami per la media di
-		// timeslot per esami,
-		// elimino la mossa più vecchia. Se ho capito bene, la tabulist mi serve per
-		// andare ad esplorare soluzioni
-		// inizialmente meno buone. Quindi devo obbligare il mio metodo ad posizionare
-		// tutti i possibili timeslot.
-		// Io so che per ogni esame ho una media di n timeslot possibili, quindi ho
-		// all'incirca nesami*mediatime possibili
-		// mosse. Siccome potrebbe essere troppo grande, nel calcolo della media, ho
-		// diminuito di 1 la media trovata.
-		// Comunque anche questo va testato
+		// if TabuList dimension is bigger than the number of exams * the medium number of time-slots for exams
+		// the oldest move is thrown out		
 		if (tabulist.size() > this.dimTabuList)
 			tabulist.remove(0);
 
 		return bestSol;
 	}
-
+	
+	/*
+	 * Checking if a solution is a local minimum 
+	 */
 	public boolean isMinLocalYet(Integer[] solution) {
 		List<Integer[]> minLoc = new ArrayList<>(model.getMinLoc());
 		for (Integer[] ml: minLoc)
@@ -143,7 +134,9 @@ public class TabuSearch {
 
 		return false;
 	}
-	
+	/*
+	 * Computing the best swapping exams blocks between time-slots couples between all possible ones
+	 */
 	private Integer[] swapTimeslot(Integer[] sol) {
 		Integer[] test;
 		Integer[] bestSol = sol.clone();
@@ -203,10 +196,8 @@ public class TabuSearch {
 		
 	}
 
-	// dalla soluzione passata dal crossover mi vado a calcolare la media dei
-	// timeslot ancora possibili
-	// per ogni esami, non so se ha senso (va testato) ma mi serve per definire
-	// dimensione tabulist
+	// From the solution passed by crossover, the mean of still possible time-slots is computed.
+	// Used to define TabuList dimension
 	private int getDimTabuList(Integer[] chrom) {
 		int notConflictual = 0;
 

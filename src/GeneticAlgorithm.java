@@ -50,8 +50,7 @@ public class GeneticAlgorithm implements Runnable {
 		while (true) {
 			this.crossover();
 			this.calculatePenaltyPop();
-			
-			// rapporto tra la penali media e la fitness massima
+			// ratio between medium penalty and maximum fitness
 			double ratio = (Arrays.stream(this.penalty).min().getAsDouble())
 					/Arrays.stream(this.penalty).average().getAsDouble();
 						
@@ -78,6 +77,11 @@ public class GeneticAlgorithm implements Runnable {
 
 	}
 	
+	/**
+	 * A method used to generate a new solution from a given one, by swapping exams of two random time-slots
+	 * @param chrome
+	 * @return the new solution
+	 */
 	private Integer[] swapTwoTimeslots(Integer[] chrome) {
 		Integer[] sol = chrome.clone();
 		
@@ -104,7 +108,9 @@ public class GeneticAlgorithm implements Runnable {
 		return sol;
 		
 	}
-	
+	/**
+	 * A method to generate initial feasible population.
+	 */
 	private void initial_population() {
 		this.getSortedExmToScheduleByNumConflict();
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
@@ -136,7 +142,7 @@ public class GeneticAlgorithm implements Runnable {
 	} 
 	
 	/**
-	 * Sort Exams by the number of conflicts, to try to assign exams
+	 * Sort Exams by the number of conflicts, in order to try to assign exams
 	 * first with the biggest number of conflicts
 	 * 
 	 */
@@ -155,7 +161,7 @@ public class GeneticAlgorithm implements Runnable {
 	}
 
 	/**
-	 * Recursive method to generate population with getBestPath Method and
+	 * Recursive method used to generate population with getBestPath Method and
 	 * getSortedExmToScheduleByNumStudent method
 	 * 
 	 * @param chrom
@@ -165,8 +171,8 @@ public class GeneticAlgorithm implements Runnable {
 	 */
 	private void doRecursive(Integer[] chrom, int step, int exam_id, int numExamsNotAssignedYet) {
 
-		if (numExamsNotAssignedYet > 0 && exam_id > -1) { // finchè non termino gli esami da schedulare
-			if (chrom[exam_id] != null) { // se l'esame ha già assegnato un suo timeslot
+		if (numExamsNotAssignedYet > 0 && exam_id > -1) { // till there are no more exams to schedule 
+			if (chrom[exam_id] != null) { // if the exams has already an assigned time-slot
 				doRecursive(chrom, step + 1, sortedExmsToSchedule.get(step + 1), numExamsNotAssignedYet);
 
 				if (returnBack > 0) {
@@ -175,7 +181,7 @@ public class GeneticAlgorithm implements Runnable {
 				}
 				
 			} else {
-				for (int i : getBestPath(chrom)) { // timeslot
+				for (int i : getBestPath(chrom)) { // time-slot
 					if (!found) {
 						if (!model.areConflictual(i, exam_id, chrom)) {
 							chrom[exam_id] = i;
@@ -208,14 +214,10 @@ public class GeneticAlgorithm implements Runnable {
 	}
 
 	/**
-	 * Find the best order path to schedule timeslot in base al numero totale di
-	 * studenti che sostengono esami già schedulati in un timeslot. L'idea è di
-	 * cercare prima di schedulare, se possibile, un esame nei timeslot più
-	 * affollati in modo da riservare i restanti timeslot agli esami più
-	 * conflittuali
-	 * 
+	 * Find the best order path to schedule time-slots based on the total number of students enrolled in already scheduled exams.
+	 * The idea is to search before scheduling if possible an exam in the most crowded time-slot, in order to reserve the remaining time-slot to most conflicting exams.
 	 * @param chrom
-	 * @return list of sorted timeslot by the number of students enrolled in the
+	 * @return list of sorted time-slots by the number of students enrolled in the
 	 *         exam assigned yet
 	 */
 	public List<Integer> getBestPath(Integer[] chrom) {
@@ -243,7 +245,7 @@ public class GeneticAlgorithm implements Runnable {
 	}
 
 	/**
-	 * This method computes penalty for each chromosomes
+	 * Computing penalty for each chromosome
 	 */
 	private void calculatePenaltyPop() {
 
@@ -251,6 +253,10 @@ public class GeneticAlgorithm implements Runnable {
 			this.penalty[c] = model.computePenalty(population[c]);
 		}
 	}
+	/**
+	 * A method used to improve the population, adopting a non-standard crossover technique for generating a child and then running a TabuSearch on it.
+	 * 
+	 */
 
 	private void crossover() {
 		int crossingSecStart ;
@@ -266,19 +272,19 @@ public class GeneticAlgorithm implements Runnable {
 				indWorstParent = i;
 			}
 		}
-		
+		// Finding a random parent
 		parent = population[rand.nextInt(nChrom)].clone();
 
 		// Calculate a random crossing section
 		crossingSecStart = rand.nextInt(nExams- this.minimum_cut);
 		crossingSecEnd = (int) (rand.nextInt(nExams - crossingSecStart ) +crossingSecStart);
 		
-		// copy crossing section two chromosome
+		// Copy crossing section two chromosomes
 		for (int i = crossingSecStart; i <= crossingSecEnd; i++) 
 			child[i] = parent[i];
 		
 		// Order Crossover modified
-		int k = 0; // contatore di ricorsioni fallite
+		int k = 0; // Recursions failed counter
 		this.sortedExmsToSchedule = new ArrayList<Integer>(ExmsToSchedule);
 		
 		do {
@@ -303,6 +309,12 @@ public class GeneticAlgorithm implements Runnable {
 
 	}
 	
+	/**
+	 * Checking if a chromosome already exists
+	 * @param chrom
+	 * @return boolean
+	 */
+	
 	public boolean existYet(Integer[] chrom) {
 
 		for (Integer[] c : population)
@@ -311,7 +323,11 @@ public class GeneticAlgorithm implements Runnable {
 
 		return false;
 	}
-
+   /**
+    * Checking if a solution in feasible
+    * @param chrom
+    * @return
+    */
 	private boolean isFeasible(Integer[] chrom) {
 		for (int e = 0; e < this.nExams; e++) {
 			if (chrom[e] == null || model.areConflictual(chrom[e], e, chrom))
@@ -320,6 +336,10 @@ public class GeneticAlgorithm implements Runnable {
 
 		return true;
 	}
+	
+	/**
+	 * Print population chromosomes
+	 */
 
 	private void printPopulation() {
 		int count = 1;
@@ -329,6 +349,10 @@ public class GeneticAlgorithm implements Runnable {
 			count++;
 		}
 	}
+	
+	/**
+	 * Print population penalties
+	 */
 
 	private void printPenaltyPop() {
 
