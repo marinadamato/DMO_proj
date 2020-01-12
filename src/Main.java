@@ -1,7 +1,6 @@
 public class Main {
 
 	public static void main(String[] args) {
-		// java -jar ETPsolverDMOgroupXX.jar instancename -t tlim
 		long tlim = 0;
 		long timeStart = System.currentTimeMillis();
 		String instance;

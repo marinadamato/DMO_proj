@@ -162,8 +162,7 @@ public class GeneticAlgorithm implements Runnable {
 
 	/**
 	 * Recursive method used to generate population with getBestPath Method and
-	 * getSortedExmToScheduleByNumStudent method
-	 * 
+	 * getSortedExmToScheduleByNumConflict method
 	 * @param chrom
 	 * @param step
 	 * @param exam_id
@@ -254,7 +253,7 @@ public class GeneticAlgorithm implements Runnable {
 		}
 	}
 	/**
-	 * A method used to improve the population, adopting a non-standard crossover technique for generating a child and then running a TabuSearch on it.
+	 * A method used to improve the population, adopting a non-standard crossover technique for generating a child and then running a Iterated Local Search on it.
 	 * 
 	 */
 
