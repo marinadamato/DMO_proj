@@ -2,16 +2,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TabuSearch {
-	private ArrayList<TLelement> tabulist;
+public class IteratedLocalSearch {
 	private Model model;
 	private int n_exams;
 	private int n_timeslots;
-	private int dimTabuList;
 	private double optPenaltyLocal = Double.MAX_VALUE;
 	private int[][] conflictMatrix;
 
-	public TabuSearch(Model model) {
+	public IteratedLocalSearch(Model model) {
 		this.model = model;
 		this.n_exams = model.getExms().size();
 		this.n_timeslots = model.getN_timeslots();
@@ -20,10 +18,8 @@ public class TabuSearch {
 	
 	// called method in crossover
 	public Integer[] run(Integer[] chrom) {
-		tabulist = new ArrayList<>();
 		double currentPenalty;
 		double newPenalty;
-		dimTabuList = getDimTabuList(chrom); // value used to set TabuList dimension 
 																			
 		Integer[] optSolution = chrom;
 		Integer[] newSolution;
@@ -76,7 +72,6 @@ public class TabuSearch {
 		double bestPenalty = 0;
 		double newPenalty;
 		double actualPenalty;
-		TLelement tl = new TLelement(-1, -1); // initializing element of TabuList
 		Integer[] bestSol = chrom.clone();
 		
 		for (int e = 0; e < this.n_exams; e++) { // for every exam
@@ -94,31 +89,13 @@ public class TabuSearch {
 						// checking if is a TabuMove OR
 						// if, even is a TabuMove, it gives a better solution than the one previously generated 
 						double penalty = model.computePenalty(newSol);
-						if (!tabulist.contains(new TLelement(e, i))
-								|| (tabulist.contains(new TLelement(e, i)) && penalty < optPenaltyLocal)) {
-
-							tl = new TLelement(e, i);
-							bestPenalty = (actualPenalty - newPenalty);
-							bestSol = newSol.clone();
-
-
-						} 
+						bestPenalty = (actualPenalty - newPenalty);
+						bestSol = newSol.clone();
 
 					}
 				}
 			}
 		}
-
-		// Once all exams have been visited, all time-slots have been tried,
-		// and the move giving the best penalty variation has been found 
-		// the move is saved
-		if (tl.getE() > -1)
-			tabulist.add(tl);
-
-		// if TabuList dimension is bigger than the number of exams * the medium number of time-slots for exams
-		// the oldest move is thrown out		
-		if (tabulist.size() > this.dimTabuList)
-			tabulist.remove(0);
 
 		return bestSol;
 	}
@@ -194,20 +171,6 @@ public class TabuSearch {
 		
 		return bestSol;			
 		
-	}
-
-	// From the solution passed by crossover, the mean of still possible time-slots is computed.
-	// Used to define TabuList dimension
-	private int getDimTabuList(Integer[] chrom) {
-		int notConflictual = 0;
-
-		for (int e1 = 0; e1 < n_exams; e1++) {
-			for (int i = 1; i <= this.n_timeslots; i++)
-				if (!model.areConflictual(i, e1, chrom))
-					notConflictual++;
-
-		}
-		return (notConflictual - this.n_exams);
 	}
 	
 

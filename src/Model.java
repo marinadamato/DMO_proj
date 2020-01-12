@@ -72,7 +72,7 @@ public class Model {
 		
 		if(penalty<optPenalty) {
 			optPenalty = penalty;
-			this.writeFdile2(solution);
+			this.writeFile(solution);
 			System.out.println( "\nTime: " + (System.currentTimeMillis() - this.timeStart) / 1000
 					+ "s - Optimal: "+optPenalty);
 			return true;
@@ -275,7 +275,7 @@ public class Model {
 	/*
 	 * Writing solution output on a file
 	 */
-	public void writeFdile(Integer[] sol) {
+	public void writeFile(Integer[] sol) {
 		try {
 			File file = new File(this.path+"_DMOgroup16.sol");
 			file.createNewFile();
@@ -289,34 +289,6 @@ public class Model {
 			e.printStackTrace();
 		}
 	}
-	
-	// to eliminate before sending the code to Manerba
-	public synchronized void writeFdile2(Integer[] sol) {
-		File file = new File(this.path+"_DMOgroup16.sol");
-		
-		double old_pen=200;
-		try {
-			BufferedReader old_file = new BufferedReader(new FileReader(file));
-			old_pen = Double.parseDouble(old_file.readLine());
-			old_file.close();
-			//System.out.println(old_pen);
-		}
-		catch (IOException e){};
-		if (old_pen>this.optPenalty) {
-			this.old_flag=true;
-			try {
-				file.createNewFile();
-				FileWriter myWriter = new FileWriter(file, false);
-				myWriter.write(this.optPenalty+ "\n");
-				for (int i = 0; i < sol.length; i++) {
-					myWriter.write(exms.get(i).getID() + " " + sol[i] + "\n");
-				}
-				myWriter.close();
-			} catch (IOException e) {
-				System.out.println("An error occurred");
-				e.printStackTrace();
-			}
-		}
-	}
+
 
 }

@@ -24,7 +24,7 @@ public class GeneticAlgorithm implements Runnable {
 	private int returnBack;
 	private List<Integer> sortedExmsToSchedule;
 	private List<Integer> ExmsToSchedule;
-	private TabuSearch ts;
+	private IteratedLocalSearch ts;
 	private long lastOptFound;
 	private int minimum_cut;
 
@@ -38,7 +38,7 @@ public class GeneticAlgorithm implements Runnable {
 		this.penalty = new double[n_chrom];
 		this.nTimeSlots = model.getN_timeslots();
 		this.rand = new Random();
-		this.ts = new TabuSearch(this.model);
+		this.ts = new IteratedLocalSearch(this.model);
 		this.minimum_cut=(int) Math.round(this.nExams * 0.1);
 	}
 
